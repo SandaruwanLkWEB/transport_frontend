@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Register</title>
+  <title>ලියාපදිංචි වන්න</title>
   <link rel="stylesheet" href="assets/styles.css" />
   <script src="assets/config.js"></script>
   <script src="assets/app.js"></script>
 </head>
 <body>
 <header>
-  <h1>Register</h1>
+  <h1>ලියාපදිංචි වන්න</h1>
   <div style="display:flex; gap:8px; align-items:center;">
-    <a href="login.html">Login</a>
-    <a href="index.html">Home</a>
+    <a href="login.html">පිවිසෙන්න</a>
+    <a href="index.html">මුල් පිටුව</a>
   </div>
 </header>
 
@@ -21,37 +21,37 @@
   <div class="card">
     <div class="row">
       <div>
-        <label>Emp Name</label>
+        <label>සේවක නම</label>
         <input id="emp_name" placeholder="Saman Perera" />
       </div>
       <div>
-        <label>Emp Number</label>
+        <label>සේවක අංකය</label>
         <input id="emp_no" placeholder="EMP001" />
       </div>
     </div>
 
     <div class="row">
       <div>
-        <label>Email</label>
+        <label>ඊමේල්</label>
         <input id="email" type="email" placeholder="name@company.lk" />
       </div>
       <div>
-        <label>Department</label>
+        <label>දෙපාර්තමේන්තුව</label>
         <select id="department_id"></select>
       </div>
     </div>
 
-    <label>Password</label>
-    <input id="password" type="password" placeholder="Min 6 chars" />
+    <label>මුරපදය</label>
+    <input id="password" type="password" placeholder="අවම අකුරු 6ක්" />
 
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
-      <button class="btn" onclick="register()">Submit Registration</button>
-      <button class="btn ghost" onclick="location.href='login.html'">Back to Login</button>
+      <button class="btn" onclick="register()">ලියාපදිංචිය යවන්න</button>
+      <button class="btn ghost" onclick="location.href='login.html'">පිවිසීම වෙත ආපසු</button>
     </div>
 
     <div class="hr"></div>
     <p class="small">
-      Self-registration accounts go to your department HOD for approval first. Approval after that your account becomes ACTIVE.
+      ඔබ Web හරහාම ලියාපදිංචි වුණ ගිණුම් පළමුව ඔබගේ දෙපාර්තමේන්තුවේ HOD වෙත අනුමැතියට යයි. HOD අනුමත කළ පසු ගිණුම ACTIVE වේ.
     </p>
   </div>
 </div>
@@ -61,7 +61,7 @@ async function loadDepartments(){
   const d = await api("/public/departments");
   qs("department_id").innerHTML = optionHTML(
     d.departments.map(x => ({ id:x.id, label:x.name })),
-    "id","label", "", true, "-- Select Department --"
+    "id","label", "", true, "-- දෙපාර්තමේන්තුව තෝරන්න --"
   );
 }
 
@@ -75,7 +75,7 @@ async function register(){
       password: qs("password").value
     };
     await api("/auth/register", { method:"POST", body: JSON.stringify(body) });
-    toast("Registration submitted. Wait for HOD approval.");
+    toast("ලියාපදිංචිය යවනු ලැබීය. Wait for HOD approval.");
     setTimeout(()=> location.href="login.html", 900);
   }catch(e){ toast(e.message); }
 }

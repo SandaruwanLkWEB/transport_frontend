@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>HR Dashboard</title>
+  <title>මානව සම්පත් (HR)</title>
   <link rel="stylesheet" href="assets/styles.css" />
   <script src="assets/config.js"></script>
   <script src="assets/app.js"></script>
 </head>
 <body>
 <header>
-  <h1>HR</h1>
+  <h1>මානව සම්පත් (HR)</h1>
   <div style="display:flex; gap:8px; align-items:center;">
-    <a href="index.html">Home</a>
-    <button class="btn secondary small" onclick="logout()">Logout</button>
+    <a href="index.html">මුල් පිටුව</a>
+    <button class="btn secondary small" onclick="logout()">ඉවත් වන්න</button>
   </div>
 </header>
 
@@ -22,22 +22,22 @@
 
   <div class="card">
     <div class="tabs">
-      <button class="btn active" id="tabApprove" onclick="setTab('approve')">Final Approvals</button>
+      <button class="btn active" id="tabඅනුමත කරන්න" onclick="setTab('approve')">Final Approvals</button>
       <button class="btn" id="tabReports" onclick="setTab('reports')">Reports</button>
     </div>
   </div>
 
   <div class="card" id="pane_approve">
-    <h2 style="margin:0 0 10px;">TA Assigned Requests</h2>
+    <h2 style="margin:0 0 10px;">TA Assigned ඉල්ලීම්</h2>
     <div style="display:flex; gap:8px; flex-wrap:wrap;">
-      <button class="btn ghost" onclick="loadTARequests()">Refresh</button>
+      <button class="btn ghost" onclick="loadTAඉල්ලීම්()">Refresh</button>
     </div>
     <div class="hr"></div>
     <div id="listBox" class="small">Loading...</div>
   </div>
 
   <div class="card" id="pane_reports" style="display:none;">
-    <h2 style="margin:0 0 10px;">Download Reports</h2>
+    <h2 style="margin:0 0 10px;">බාගත කරන්න Reports</h2>
     <div class="small">Reports download කරන්නේ HR Final Approval පස්සේම.</div>
     <div class="row">
       <div>
@@ -81,8 +81,8 @@ async function loadTARequests(){
 }
 
 function render(){
-  if(LIST.length===0){ qs("listBox").innerHTML = "<span class='badge good'>No pending</span>"; return; }
-  let html = "<table><tr><th>ID</th><th>Date</th><th>Time</th><th>Department</th><th>Status</th><th>Action</th></tr>";
+  if(LIST.length===0){ qs("listBox").innerHTML = "<span class='badge good'>බලාපොරොත්තු වූ ඉල්ලීම් නැත</span>"; return; }
+  let html = "<table><tr><th>ID</th><th>දිනය</th><th>වේලාව</th><th>දෙපාර්තමේන්තුව</th><th>තත්ත්වය</th><th>ක්‍රියාව</th></tr>";
   for(const r of LIST){
     html += `<tr>
       <td>${r.id}</td>
@@ -91,7 +91,12 @@ function render(){
       <td>${r.department_name}</td>
       <td>${statusBadge(r.status)}</td>
       <td>
-        <button class="btn small" onclick="finalApprove(${r.id})">Final Approve</button>
+        ${r.status==="TA_ASSIGNED_PENDING_HR" ? `
+        <button class="btn small" onclick="overApprove(${r.id})">ඔවරයිඩ් අනුමත කරන්න</button>
+        <button class="btn small secondary" onclick="overReject(${r.id})">ඔවරයිඩ් ප්‍රතික්ෂේප කරන්න</button>
+      ` : `
+        <button class="btn small" onclick="finalApprove(${r.id})">අවසාන අනුමැතිය</button>
+      `}
       </td>
     </tr>`;
   }
@@ -99,10 +104,28 @@ function render(){
   qs("listBox").innerHTML = html;
 }
 
+
+async function overApprove(id){
+  try{
+    await api(`/hr/requests/${id}/overbook/approve`, {method:"POST"});
+    toast("ඔවරයිඩ් (+1/+2) අනුමත කරන ලදී. දැන් අවසාන අනුමැතිය ලබා දිය හැක.");
+    await loadTARequests();
+  }catch(e){ toast(e.message); }
+}
+
+async function overReject(id){
+  try{
+    await api(`/hr/requests/${id}/overbook/reject`, {method:"POST"});
+    toast("ඔවරයිඩ් ප්‍රතික්ෂේප කරන ලදී. TA වෙත නැවත යවයි (වාහන අමතර දාන්න/සකස් කරන්න).");
+    await loadTARequests();
+  }catch(e){ toast(e.message); }
+}
+
+
 async function finalApprove(id){
   try{
     await api(`/hr/requests/${id}/final-approve`, {method:"POST"});
-    toast("Final approved. Reports ready.");
+    toast("අවසාන අනුමැතිය ලබා දුන්නා. වාර්තා සූදානම්.");
     qs("repReqId").value = id;
     await loadTARequests();
   }catch(e){ toast(e.message); }

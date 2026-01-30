@@ -3,77 +3,65 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Transport Request System - Login</title>
+  <title>පිවිසෙන්න</title>
   <link rel="stylesheet" href="assets/styles.css" />
   <script src="assets/config.js"></script>
   <script src="assets/app.js"></script>
 </head>
 <body>
 <header>
-  <h1>Transport Request System</h1>
+  <h1>පිවිසෙන්න</h1>
   <div style="display:flex; gap:8px; align-items:center;">
-    <a href="register.html">Register</a>
+    <a href="register.html">ලියාපදිංචි වන්න</a>
+    <a href="index.html">මුල් පිටුව</a>
   </div>
 </header>
 
 <div class="container">
   <div class="card">
-    <h2 style="margin:0 0 10px 0;">Login</h2>
-    <label>Email</label>
-    <input id="email" type="email" placeholder="name@company.lk" autocomplete="username" />
-    <label>Password</label>
-    <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
-    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
-      <button class="btn" onclick="doLogin()">Login</button>
-      <button class="btn ghost" onclick="location.href='register.html'">Create account</button>
+    <label>ඊමේල්</label>
+    <input id="email" type="email" placeholder="name@company.lk" />
+    <label>මුරපදය</label>
+    <input id="password" type="password" placeholder="••••••••" />
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+      <button class="btn" onclick="doLogin()">පිවිසෙන්න</button>
+      <button class="btn ghost" onclick="location.href='register.html'">ගිණුමක් තනන්න</button>
     </div>
-    <p class="small" id="hint" style="display:none; margin-top:12px;"></p>
+    <div class="hr"></div>
+    <p class="small">
+      ඔබ ව Web හරහාම ලියාපදිංචි වුණේ නම්, පළමුව HOD අනුමැතිය අවශ්‍යයි. පිවිසෙන්න බැරි නම්, ඔබගේ HOD වෙත දැනුම්දී ලියාපදිංචිය අනුමත කරගන්න.
+    </p>
   </div>
 </div>
 
 <script>
 function dashForRole(role){
-  const r = (role || '').toUpperCase();
-  if (r === 'ADMIN') return 'admin.html';
-  if (r === 'HOD') return 'hod.html';
-  if (r === 'HR') return 'hr.html';
-  if (r === 'TA' || r === 'TRANSPORT_AUTHORITY') return 'ta.html';
-  return 'emp.html';
+  const map = { "ADMIN":"admin.html", "HOD":"hod.html", "HR":"hr.html", "TA":"ta.html", "EMP":"emp.html" };
+  return map[role] || "index.html";
 }
 
 async function doLogin(){
   try{
-    const email = qs('email').value.trim();
-    const password = qs('password').value;
-    if(!email || !password) return toast('Email සහ Password දෙකම දාන්න.');
-    const res = await fetch(API_BASE_URL + '/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+    const d = await api("/auth/login", {
+      method:"POST",
+      body: JSON.stringify({ email: qs("email").value.trim(), password: qs("password").value })
     });
-    const data = await res.json().catch(()=>({}));
-    if(!res.ok) return toast(data.message || 'Login failed');
-    setToken(data.token);
-    // get role and redirect
-    const me = await fetch(API_BASE_URL + '/me', { headers: { 'Authorization': 'Bearer ' + getToken() }});
-    const meData = await me.json().catch(()=>({}));
-    const role = meData.role || data.role;
-    location.href = dashForRole(role);
-  }catch(e){
-    toast('Network error. Backend URL/CORS check කරන්න.');
-  }
+    setToken(d.token);
+    const me = await loadMe();
+    location.href = dashForRole(me.me.role);
+  }catch(e){ toast(e.message); }
 }
 
-// If already logged in, auto redirect by role
-(async function(){
-  const t = getToken();
-  if(!t) return;
+// If already logged in
+(async function init(){
   try{
-    const me = await fetch(API_BASE_URL + '/me', { headers: { 'Authorization': 'Bearer ' + t }});
-    if(!me.ok) return;
-    const meData = await me.json().catch(()=>({}));
-    if(meData && meData.role) location.href = dashForRole(meData.role);
-  }catch(e){}
+    const t = getToken();
+    if(!t) return;
+    const me = await loadMe();
+    location.href = dashForRole(me.me.role);
+  }catch(e){
+    clearToken();
+  }
 })();
 </script>
 </body>

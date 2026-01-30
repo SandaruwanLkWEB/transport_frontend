@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>EMP - Today Transport</title>
+  <title>අද ප්‍රවාහන තොරතුරු</title>
   <link rel="stylesheet" href="assets/styles.css" />
   <script src="assets/config.js"></script>
   <script src="assets/app.js"></script>
 </head>
 <body>
 <header>
-  <h1>EMP - Today Transport</h1>
+  <h1>අද ප්‍රවාහන තොරතුරු</h1>
   <div style="display:flex; gap:8px; align-items:center;">
-    <a href="index.html">Home</a>
-    <button class="btn secondary small" onclick="logout()">Logout</button>
+    <a href="index.html">මුල් පිටුව</a>
+    <button class="btn secondary small" onclick="logout()">ඉවත් වන්න</button>
   </div>
 </header>
 
@@ -29,40 +29,67 @@ async function guard(){
   qs("meBox").innerHTML = `<b>${me.role}</b> | ${me.email}`;
 }
 
+
 async function loadToday(){
   const d = await api("/emp/today-transport");
   if(!d.has_transport){
-    qs("box").innerHTML = "<b>අදට transport නැහැ.</b><div class='small'>ඔයා අද OT / special request එකට ඇතුල් කරලා නැත්නම්, HOD ට කියලා request එකට add කරගන්න.</div>";
+    const msg = d.message || "ඔබට අද ප්‍රවාහන පහසුකම් අනුයුක්ත කර නැත.";
+    const hint = d.hint || "ඔබ අමතක වී ඇතුළත් නොවූ බව සිතෙන්නේ නම් හැකි ඉක්මනින් ප්‍රවාහන අධිකාරිය සම්බන්ධ කරගන්න.";
+    const phone = (d.ta_contact && d.ta_contact.phone) ? d.ta_contact.phone : "";
+    qs("box").innerHTML = `
+      <b>${msg}</b>
+      <div class="small" style="margin-top:6px;">${hint}</div>
+      ${phone ? `<div class="small" style="margin-top:6px;"><b>සම්බන්ධ වීමට:</b> ${phone}</div>` : ""}
+    `;
     return;
   }
+
+  const route = d.route || {};
+  const sub = d.sub_route || {};
+  const v0 = (d.vehicles && d.vehicles.length) ? d.vehicles[0] : {};
+
   qs("box").innerHTML = `
-    <div style="font-weight:800; font-size:16px;">අදට Transport Detail</div>
+    <div style="font-weight:800; font-size:16px;">අදට ප්‍රවාහන විස්තර</div>
     <div class="hr"></div>
+
     <div class="row">
       <div>
-        <div class="small">Route</div>
-        <div style="font-weight:800;">${d.route_no || ""} ${d.route_name ? "- "+d.route_name : ""}</div>
+        <div class="small">ගමන අවසන් කරන ස්ථානය</div>
+        <div style="font-weight:800;">${sub.sub_name || "—"}</div>
       </div>
       <div>
-        <div class="small">Vehicle</div>
-        <div style="font-weight:800;">${d.vehicle_no || "-"}</div>
+        <div class="small">රූට්</div>
+        <div style="font-weight:800;">${route.route_no || ""} ${route.route_name ? "- "+route.route_name : ""}</div>
       </div>
     </div>
+
     <div class="row">
       <div>
-        <div class="small">Driver</div>
-        <div style="font-weight:800;">${d.driver_name || "-"}</div>
+        <div class="small">වාහනයේ ලියාපදිංචි අංකය</div>
+        <div style="font-weight:800;">${v0.vehicle_registration_no || "—"}</div>
       </div>
       <div>
-        <div class="small">Phone</div>
-        <div style="font-weight:800;">${d.driver_phone || "-"}</div>
+        <div class="small">වාහන අංකය</div>
+        <div style="font-weight:800;">${v0.vehicle_no || "—"} ${v0.fleet_no ? "(Fleet: "+v0.fleet_no+")" : ""}</div>
       </div>
     </div>
+
+    <div class="row">
+      <div>
+        <div class="small">රියදුරු නම</div>
+        <div style="font-weight:800;">${v0.driver_name || "—"}</div>
+      </div>
+      <div>
+        <div class="small">දුරකථන අංකය</div>
+        <div style="font-weight:800;">${v0.driver_phone || "—"}</div>
+      </div>
+    </div>
+
     <div class="hr"></div>
-    <div class="small">Instructions</div>
-    <div style="font-weight:700;">${d.instructions || "—"}</div>
+    <div class="small"><b>උපදෙස්:</b> ${v0.instructions || "—"}</div>
   `;
 }
+
 
 (async function init(){
   try{
