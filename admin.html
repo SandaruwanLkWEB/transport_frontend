@@ -1,0 +1,435 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+</head>
+<body>
+<header>
+  <h1>Admin</h1>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <a href="index.html">Home</a>
+    <button class="btn secondary small" onclick="logout()">Logout</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="card" id="meBox"></div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="btn active" id="tabApprovals" onclick="setTab('approvals')">Approvals</button>
+      <button class="btn" id="tabMaster" onclick="setTab('master')">Master Data</button>
+      <button class="btn" id="tabReports" onclick="setTab('reports')">Reports</button>
+    </div>
+  </div>
+
+  <!-- Approvals -->
+  <div class="card" id="pane_approvals">
+    <h2 style="margin:0 0 10px;">Requests (All Departments)</h2>
+
+    <div class="row">
+      <div>
+        <label>Filter by status</label>
+        <select id="reqStatus" onchange="renderRequests()">
+          <option value="">All</option>
+          <option value="SUBMITTED">SUBMITTED</option>
+          <option value="DRAFT">DRAFT</option>
+          <option value="ADMIN_APPROVED">ADMIN_APPROVED</option>
+          <option value="TA_ASSIGNED">TA_ASSIGNED</option>
+          <option value="HR_FINAL_APPROVED">HR_FINAL_APPROVED</option>
+        </select>
+      </div>
+      <div>
+        <label>Search</label>
+        <input id="reqSearch" placeholder="dept / date / id..." oninput="renderRequests()" />
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn ghost" onclick="loadRequests()">Refresh</button>
+    </div>
+
+    <div class="hr"></div>
+    <div id="reqList" class="small">Loading...</div>
+
+    <div class="hr"></div>
+
+    <div id="reqDetail" style="display:none;">
+      <h3 style="margin:0 0 10px;">Request Detail: <span id="dReqId"></span></h3>
+      <div id="dMeta" class="small"></div>
+      <div class="hr"></div>
+      <div id="dEmployees"></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+        <button class="btn" id="btnApprove" onclick="approveReq()">Approve (ADMIN)</button>
+        <button class="btn ghost" onclick="closeDetail()">Close</button>
+      </div>
+      <p class="small">Admin approval පස්සේ TA assignment වලට යනවා.</p>
+    </div>
+  </div>
+
+  <!-- Master -->
+  <div class="card" id="pane_master" style="display:none;">
+    <h2 style="margin:0 0 10px;">Master Data</h2>
+
+    <div class="row">
+      <div class="card" style="background:#fff; border:1px solid var(--line);">
+        <h3 style="margin:0 0 10px;">Departments</h3>
+        <div class="row">
+          <div>
+            <label>Department Name</label>
+            <input id="depName" placeholder="IT Department" />
+          </div>
+          <div style="display:flex; align-items:end; gap:8px;">
+            <button class="btn small" onclick="createDepartment()">Add</button>
+            <button class="btn small ghost" onclick="loadDepartments()">Refresh</button>
+          </div>
+        </div>
+        <div id="depList" class="small"></div>
+      </div>
+
+      <div class="card" style="background:#fff; border:1px solid var(--line);">
+        <h3 style="margin:0 0 10px;">Routes</h3>
+        <div class="row">
+          <div>
+            <label>Route No</label>
+            <input id="routeNo" placeholder="01" />
+          </div>
+          <div>
+            <label>Route Name</label>
+            <input id="routeName" placeholder="Galle" />
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn small" onclick="createRoute()">Add Route</button>
+          <button class="btn small ghost" onclick="loadRoutes()">Refresh</button>
+        </div>
+        <div class="hr"></div>
+        <div id="routeList" class="small"></div>
+      </div>
+    </div>
+
+    <div class="card" style="background:#fff; border:1px solid var(--line);">
+      <h3 style="margin:0 0 10px;">Sub Routes</h3>
+      <div class="row">
+        <div>
+          <label>Select Route</label>
+          <select id="subRouteParent" onchange="loadSubRoutes()"></select>
+        </div>
+        <div>
+          <label>Sub Name</label>
+          <input id="subName" placeholder="Baddegama" />
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn small" onclick="createSubRoute()">Add Sub Route</button>
+        <button class="btn small ghost" onclick="loadSubRoutes()">Refresh</button>
+      </div>
+      <div class="hr"></div>
+      <div id="subList" class="small"></div>
+      <p class="small">Note: Per Route max sub-routes 50 (business rule). Backend enforces via DB unique constraints; keep it in mind.</p>
+    </div>
+  </div>
+
+  <!-- Reports -->
+  <div class="card" id="pane_reports" style="display:none;">
+    <h2 style="margin:0 0 10px;">Reports</h2>
+    <div class="small">HR Final Approval පස්සේම download කරන්න.</div>
+    <div class="row">
+      <div>
+        <label>Request ID</label>
+        <input id="repReqId" type="number" placeholder="e.g. 12" />
+      </div>
+      <div>
+        <label>Actions</label>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+          <button class="btn" onclick="downloadRouteReport()">Route-wise PDF</button>
+          <button class="btn secondary" onclick="downloadVehicleReport()">Vehicle PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let ME=null;
+let REQS=[];
+let CURRENT=null;
+let DEPS=[];
+let ROUTES=[];
+let SUBS=[];
+
+function setTab(tab){
+  const tabs = ["approvals","master","reports"];
+  for(const t of tabs){
+    qs("pane_"+t).style.display = (t===tab) ? "" : "none";
+    qs("tab"+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle("active", t===tab);
+  }
+}
+
+async function guard(){
+  ME = await guardRole("ADMIN");
+  if(!ME) return;
+  qs("meBox").innerHTML = `<b>${ME.role}</b> | ${ME.email}`;
+}
+
+async function loadRequests(){
+  const d = await api("/admin/requests");
+  REQS = d.requests || [];
+  renderRequests();
+}
+
+function renderRequests(){
+  const status = qs("reqStatus").value;
+  const q = (qs("reqSearch").value||"").toLowerCase();
+  const list = REQS
+    .filter(r => !status || r.status===status)
+    .filter(r => (String(r.id).includes(q) || (r.department_name||"").toLowerCase().includes(q) || (r.request_date||"").toLowerCase().includes(q)));
+
+  if(list.length===0){ qs("reqList").innerHTML = "<span class='badge warn'>No matching requests</span>"; return; }
+
+  let html = "<table><tr><th>ID</th><th>Date</th><th>Time</th><th>Department</th><th>Status</th><th>Action</th></tr>";
+  for(const r of list){
+    const canApprove = r.status==="SUBMITTED";
+    html += `<tr>
+      <td>${r.id}</td>
+      <td>${r.request_date}</td>
+      <td>${r.request_time}</td>
+      <td>${r.department_name}</td>
+      <td>${statusBadge(r.status)}</td>
+      <td><button class="btn small" onclick="openDetail(${r.id})">View</button></td>
+    </tr>`;
+  }
+  html += "</table>";
+  qs("reqList").innerHTML = html;
+}
+
+async function openDetail(id){
+  try{
+    const d = await api(`/admin/requests/${id}`);
+    CURRENT = d.request;
+    qs("reqDetail").style.display = "";
+    qs("dReqId").textContent = id;
+    qs("dMeta").innerHTML = `Dept: <b>${d.request.department_name}</b> | Date: <b>${d.request.request_date}</b> | Time: <b>${d.request.request_time}</b> | Status: ${statusBadge(d.request.status)}`;
+
+    let html = "<table><tr><th>Employee</th><th>Emp No</th><th>Route</th><th>Sub</th></tr>";
+    for(const e of d.employees){
+      html += `<tr>
+        <td>${e.full_name}</td>
+        <td>${e.emp_no}</td>
+        <td>${e.effective_route_id ?? ""}</td>
+        <td>${e.effective_sub_route_id ?? ""}</td>
+      </tr>`;
+    }
+    html += "</table>";
+    qs("dEmployees").innerHTML = html;
+
+    qs("btnApprove").disabled = d.request.status !== "SUBMITTED";
+    if(d.request.status !== "SUBMITTED"){
+      qs("btnApprove").textContent = "Approve (ADMIN)";
+    }else{
+      qs("btnApprove").textContent = "Approve (ADMIN)";
+    }
+  }catch(e){ toast(e.message); }
+}
+
+function closeDetail(){
+  qs("reqDetail").style.display = "none";
+  CURRENT=null;
+}
+
+async function approveReq(){
+  try{
+    if(!CURRENT) return;
+    await api(`/admin/requests/${CURRENT.id}/approve`, {method:"POST"});
+    toast("Approved");
+    await loadRequests();
+    await openDetail(CURRENT.id);
+  }catch(e){ toast(e.message); }
+}
+
+// Master data
+async function loadDepartments(){
+  const d = await api("/admin/departments");
+  DEPS = d.departments || [];
+  let html = "<table><tr><th>Name</th><th>Action</th></tr>";
+  for(const dep of DEPS){
+    html += `<tr>
+      <td><input id="dep_${dep.id}" value="${(dep.name||"").replace(/"/g,'&quot;')}" /></td>
+      <td style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn small" onclick="updateDepartment(${dep.id})">Save</button>
+        <button class="btn small ghost" onclick="deleteDepartment(${dep.id})">Delete</button>
+      </td>
+    </tr>`;
+  }
+  html += "</table>";
+  qs("depList").innerHTML = html;
+
+  // refresh dropdown for subroutes too
+  // (departments used in register via /public/departments)
+}
+
+async function createDepartment(){
+  try{
+    const name = qs("depName").value.trim();
+    if(!name) throw new Error("Name required");
+    await api("/admin/departments", {method:"POST", body: JSON.stringify({name})});
+    qs("depName").value="";
+    toast("Department added");
+    await loadDepartments();
+  }catch(e){ toast(e.message); }
+}
+
+async function updateDepartment(id){
+  try{
+    const name = qs("dep_"+id).value.trim();
+    await api(`/admin/departments/${id}`, {method:"PATCH", body: JSON.stringify({name})});
+    toast("Saved");
+    await loadDepartments();
+  }catch(e){ toast(e.message); }
+}
+async function deleteDepartment(id){
+  try{
+    await api(`/admin/departments/${id}`, {method:"DELETE"});
+    toast("Deleted");
+    await loadDepartments();
+  }catch(e){ toast(e.message); }
+}
+
+async function loadRoutes(){
+  const d = await api("/admin/routes");
+  ROUTES = d.routes || [];
+  let html = "<table><tr><th>No</th><th>Name</th><th>Action</th></tr>";
+  for(const r of ROUTES){
+    html += `<tr>
+      <td><input id="rno_${r.id}" value="${(r.route_no||"").replace(/"/g,'&quot;')}" /></td>
+      <td><input id="rname_${r.id}" value="${(r.route_name||"").replace(/"/g,'&quot;')}" /></td>
+      <td style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn small" onclick="updateRoute(${r.id})">Save</button>
+        <button class="btn small ghost" onclick="deleteRoute(${r.id})">Delete</button>
+      </td>
+    </tr>`;
+  }
+  html += "</table>";
+  qs("routeList").innerHTML = html;
+
+  // dropdown for subroutes
+  let opt = '<option value="">-- Select Route --</option>';
+  for(const r of ROUTES){
+    opt += `<option value="${r.id}">${r.route_no} - ${r.route_name}</option>`;
+  }
+  qs("subRouteParent").innerHTML = opt;
+  // update lookup cache for other roles (optional): clear local cache
+  localStorage.removeItem("routesTree");
+}
+
+async function createRoute(){
+  try{
+    const route_no = qs("routeNo").value.trim();
+    const route_name = qs("routeName").value.trim();
+    if(!route_no || !route_name) throw new Error("Route no & name required");
+    await api("/admin/routes", {method:"POST", body: JSON.stringify({route_no, route_name})});
+    qs("routeNo").value=""; qs("routeName").value="";
+    toast("Route added");
+    await loadRoutes();
+  }catch(e){ toast(e.message); }
+}
+
+async function updateRoute(id){
+  try{
+    const route_no = qs("rno_"+id).value.trim();
+    const route_name = qs("rname_"+id).value.trim();
+    await api(`/admin/routes/${id}`, {method:"PATCH", body: JSON.stringify({route_no, route_name})});
+    toast("Saved");
+    await loadRoutes();
+  }catch(e){ toast(e.message); }
+}
+async function deleteRoute(id){
+  try{
+    await api(`/admin/routes/${id}`, {method:"DELETE"});
+    toast("Deleted");
+    await loadRoutes();
+    await loadSubRoutes();
+  }catch(e){ toast(e.message); }
+}
+
+async function loadSubRoutes(){
+  try{
+    const routeId = qs("subRouteParent").value;
+    if(!routeId){ qs("subList").innerHTML = "<span class='badge warn'>Select route</span>"; return; }
+    const d = await api(`/admin/routes/${routeId}/subroutes`);
+    SUBS = d.sub_routes || [];
+    let html = "<table><tr><th>Sub Name</th><th>Action</th></tr>";
+    for(const s of SUBS){
+      html += `<tr>
+        <td><input id="sname_${s.id}" value="${(s.sub_name||"").replace(/"/g,'&quot;')}" /></td>
+        <td style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn small" onclick="updateSub(${s.id})">Save</button>
+          <button class="btn small ghost" onclick="deleteSub(${s.id})">Delete</button>
+        </td>
+      </tr>`;
+    }
+    html += "</table>";
+    qs("subList").innerHTML = html;
+    localStorage.removeItem("routesTree");
+  }catch(e){ toast(e.message); }
+}
+
+async function createSubRoute(){
+  try{
+    const routeId = qs("subRouteParent").value;
+    const sub_name = qs("subName").value.trim();
+    if(!routeId) throw new Error("Select route");
+    if(!sub_name) throw new Error("Sub name required");
+    await api(`/admin/routes/${routeId}/subroutes`, {method:"POST", body: JSON.stringify({sub_name})});
+    qs("subName").value="";
+    toast("Sub route added");
+    await loadSubRoutes();
+  }catch(e){ toast(e.message); }
+}
+
+async function updateSub(id){
+  try{
+    const sub_name = qs("sname_"+id).value.trim();
+    await api(`/admin/subroutes/${id}`, {method:"PATCH", body: JSON.stringify({sub_name})});
+    toast("Saved");
+    await loadSubRoutes();
+  }catch(e){ toast(e.message); }
+}
+async function deleteSub(id){
+  try{
+    await api(`/admin/subroutes/${id}`, {method:"DELETE"});
+    toast("Deleted");
+    await loadSubRoutes();
+  }catch(e){ toast(e.message); }
+}
+
+// Reports
+function downloadRouteReport(){
+  const id = qs("repReqId").value.trim();
+  if(!id){ toast("Enter request id"); return; }
+  window.open(`${API_BASE_URL}/reports/route-wise?request_id=${encodeURIComponent(id)}`, "_blank");
+}
+function downloadVehicleReport(){
+  const id = qs("repReqId").value.trim();
+  if(!id){ toast("Enter request id"); return; }
+  window.open(`${API_BASE_URL}/reports/vehicle?request_id=${encodeURIComponent(id)}`, "_blank");
+}
+
+(async function init(){
+  try{
+    await guard();
+    await loadRequests();
+    await loadDepartments();
+    await loadRoutes();
+    await loadSubRoutes();
+  }catch(e){ toast(e.message); logout(); }
+})();
+</script>
+</body>
+</html>

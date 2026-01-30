@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+</head>
+<body>
+<header>
+  <h1>Login</h1>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <a href="register.html">Register</a>
+    <a href="index.html">Home</a>
+  </div>
+</header>
+
+<div class="container">
+  <div class="card">
+    <label>Email</label>
+    <input id="email" type="email" placeholder="name@company.lk" />
+    <label>Password</label>
+    <input id="password" type="password" placeholder="••••••••" />
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+      <button class="btn" onclick="doLogin()">Login</button>
+      <button class="btn ghost" onclick="location.href='register.html'">Create Account</button>
+    </div>
+    <div class="hr"></div>
+    <p class="small">
+      Self registered EMP accounts require HOD approval first. If you can’t login, ask your HOD to approve your registration.
+    </p>
+  </div>
+</div>
+
+<script>
+function dashForRole(role){
+  const map = { "ADMIN":"admin.html", "HOD":"hod.html", "HR":"hr.html", "TA":"ta.html", "EMP":"emp.html" };
+  return map[role] || "index.html";
+}
+
+async function doLogin(){
+  try{
+    const d = await api("/auth/login", {
+      method:"POST",
+      body: JSON.stringify({ email: qs("email").value.trim(), password: qs("password").value })
+    });
+    setToken(d.token);
+    const me = await loadMe();
+    location.href = dashForRole(me.me.role);
+  }catch(e){ toast(e.message); }
+}
+
+// If already logged in
+(async function init(){
+  try{
+    const t = getToken();
+    if(!t) return;
+    const me = await loadMe();
+    location.href = dashForRole(me.me.role);
+  }catch(e){
+    clearToken();
+  }
+})();
+</script>
+</body>
+</html>

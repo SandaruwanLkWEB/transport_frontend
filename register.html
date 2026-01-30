@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Register</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+</head>
+<body>
+<header>
+  <h1>Register</h1>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <a href="login.html">Login</a>
+    <a href="index.html">Home</a>
+  </div>
+</header>
+
+<div class="container">
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>Emp Name</label>
+        <input id="emp_name" placeholder="Saman Perera" />
+      </div>
+      <div>
+        <label>Emp Number</label>
+        <input id="emp_no" placeholder="EMP001" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Email</label>
+        <input id="email" type="email" placeholder="name@company.lk" />
+      </div>
+      <div>
+        <label>Department</label>
+        <select id="department_id"></select>
+      </div>
+    </div>
+
+    <label>Password</label>
+    <input id="password" type="password" placeholder="Min 6 chars" />
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+      <button class="btn" onclick="register()">Submit Registration</button>
+      <button class="btn ghost" onclick="location.href='login.html'">Back to Login</button>
+    </div>
+
+    <div class="hr"></div>
+    <p class="small">
+      Self-registration accounts go to your department HOD for approval first. Approval after that your account becomes ACTIVE.
+    </p>
+  </div>
+</div>
+
+<script>
+async function loadDepartments(){
+  const d = await api("/public/departments");
+  qs("department_id").innerHTML = optionHTML(
+    d.departments.map(x => ({ id:x.id, label:x.name })),
+    "id","label", "", true, "-- Select Department --"
+  );
+}
+
+async function register(){
+  try{
+    const body = {
+      emp_name: qs("emp_name").value.trim(),
+      emp_no: qs("emp_no").value.trim(),
+      email: qs("email").value.trim(),
+      department_id: qs("department_id").value,
+      password: qs("password").value
+    };
+    await api("/auth/register", { method:"POST", body: JSON.stringify(body) });
+    toast("Registration submitted. Wait for HOD approval.");
+    setTimeout(()=> location.href="login.html", 900);
+  }catch(e){ toast(e.message); }
+}
+
+(async function init(){
+  try{ await loadDepartments(); } catch(e){ toast(e.message); }
+})();
+</script>
+</body>
+</html>

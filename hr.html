@@ -1,0 +1,130 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HR Dashboard</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+</head>
+<body>
+<header>
+  <h1>HR</h1>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <a href="index.html">Home</a>
+    <button class="btn secondary small" onclick="logout()">Logout</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="card" id="meBox"></div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="btn active" id="tabApprove" onclick="setTab('approve')">Final Approvals</button>
+      <button class="btn" id="tabReports" onclick="setTab('reports')">Reports</button>
+    </div>
+  </div>
+
+  <div class="card" id="pane_approve">
+    <h2 style="margin:0 0 10px;">TA Assigned Requests</h2>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn ghost" onclick="loadTARequests()">Refresh</button>
+    </div>
+    <div class="hr"></div>
+    <div id="listBox" class="small">Loading...</div>
+  </div>
+
+  <div class="card" id="pane_reports" style="display:none;">
+    <h2 style="margin:0 0 10px;">Download Reports</h2>
+    <div class="small">Reports download කරන්නේ HR Final Approval පස්සේම.</div>
+    <div class="row">
+      <div>
+        <label>Request ID</label>
+        <input id="repReqId" type="number" placeholder="e.g. 12" />
+      </div>
+      <div>
+        <label>Actions</label>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+          <button class="btn" onclick="downloadRouteReport()">Route-wise PDF</button>
+          <button class="btn secondary" onclick="downloadVehicleReport()">Vehicle PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let ME=null;
+let LIST=[];
+
+function setTab(tab){
+  const tabs = ["approve","reports"];
+  for(const t of tabs){
+    qs("pane_"+t).style.display = (t===tab) ? "" : "none";
+    qs("tab"+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle("active", t===tab);
+  }
+}
+
+async function guard(){
+  ME = await guardRole("HR");
+  if(!ME) return;
+  qs("meBox").innerHTML = `<b>${ME.role}</b> | ${ME.email}`;
+}
+
+async function loadTARequests(){
+  const d = await api("/hr/requests/ta-assigned");
+  LIST = d.requests || [];
+  render();
+}
+
+function render(){
+  if(LIST.length===0){ qs("listBox").innerHTML = "<span class='badge good'>No pending</span>"; return; }
+  let html = "<table><tr><th>ID</th><th>Date</th><th>Time</th><th>Department</th><th>Status</th><th>Action</th></tr>";
+  for(const r of LIST){
+    html += `<tr>
+      <td>${r.id}</td>
+      <td>${r.request_date}</td>
+      <td>${r.request_time}</td>
+      <td>${r.department_name}</td>
+      <td>${statusBadge(r.status)}</td>
+      <td>
+        <button class="btn small" onclick="finalApprove(${r.id})">Final Approve</button>
+      </td>
+    </tr>`;
+  }
+  html += "</table>";
+  qs("listBox").innerHTML = html;
+}
+
+async function finalApprove(id){
+  try{
+    await api(`/hr/requests/${id}/final-approve`, {method:"POST"});
+    toast("Final approved. Reports ready.");
+    qs("repReqId").value = id;
+    await loadTARequests();
+  }catch(e){ toast(e.message); }
+}
+
+function downloadRouteReport(){
+  const id = qs("repReqId").value.trim();
+  if(!id){ toast("Enter request id"); return; }
+  window.open(`${API_BASE_URL}/reports/route-wise?request_id=${encodeURIComponent(id)}`, "_blank");
+}
+function downloadVehicleReport(){
+  const id = qs("repReqId").value.trim();
+  if(!id){ toast("Enter request id"); return; }
+  window.open(`${API_BASE_URL}/reports/vehicle?request_id=${encodeURIComponent(id)}`, "_blank");
+}
+
+(async function init(){
+  try{
+    await guard();
+    await loadTARequests();
+  }catch(e){ toast(e.message); logout(); }
+})();
+</script>
+</body>
+</html>

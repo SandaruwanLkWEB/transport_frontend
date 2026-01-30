@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Transport Request System</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+</head>
+<body>
+<header>
+  <h1>Transport Request System</h1>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <a href="login.html">Login</a>
+    <a href="register.html">Register</a>
+  </div>
+</header>
+
+<div class="container">
+  <div class="card">
+    <h2 style="margin:0 0 6px;">Enterprise Template</h2>
+    <p class="small" style="margin:0;">
+      Postgres + Railway Backend API + GitHub Static Web. Role-based dashboards: HOD → Admin → Transport Authority → HR → EMP.
+    </p>
+    <div class="hr"></div>
+    <div class="tabs">
+      <button class="btn" onclick="go('admin.html')">Admin</button>
+      <button class="btn" onclick="go('hod.html')">HOD</button>
+      <button class="btn" onclick="go('ta.html')">Transport Authority</button>
+      <button class="btn" onclick="go('hr.html')">HR</button>
+      <button class="btn" onclick="go('emp.html')">EMP</button>
+    </div>
+  </div>
+
+  <div class="kpi">
+    <div class="card">
+      <div class="small">Flow</div>
+      <div style="font-weight:700; font-size:14px;">HOD → Admin → TA → HR</div>
+      <div class="small">Requests move through approvals and assignments.</div>
+    </div>
+    <div class="card">
+      <div class="small">Capacity</div>
+      <div style="font-weight:700; font-size:14px;">Auto Validation</div>
+      <div class="small">TA can’t submit if capacity is not enough.</div>
+    </div>
+    <div class="card">
+      <div class="small">Reports</div>
+      <div style="font-weight:700; font-size:14px;">A4 / Font 22</div>
+      <div class="small">Route-wise + Vehicle reports after HR final approval.</div>
+    </div>
+    <div class="card">
+      <div class="small">Security</div>
+      <div style="font-weight:700; font-size:14px;">JWT + RBAC</div>
+      <div class="small">Role-based access control for all endpoints.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function go(page){
+  // if not logged in, go login first
+  const t = getToken();
+  if(!t){ location.href="login.html"; return; }
+  location.href = page;
+}
+</script>
+</body>
+</html>
