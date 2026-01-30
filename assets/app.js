@@ -74,7 +74,7 @@ function subRoutesFor(route_id){
   return ROUTE_TREE.sub_routes.filter(s => String(s.route_id) === String(route_id));
 }
 
-function optionHTML(list, valueKey, labelKey, selectedValue, includeEmpty=true, emptyLabel="-- Select --"){
+function optionHTML(list, valueKey, labelKey, selectedValue, includeEmpty=true, emptyLabel="-- තෝරන්න --"){
   let html = includeEmpty ? `<option value="">${emptyLabel}</option>` : "";
   for(const x of list){
     const v = x[valueKey];
@@ -87,13 +87,16 @@ function optionHTML(list, valueKey, labelKey, selectedValue, includeEmpty=true, 
 
 function statusBadge(status){
   const map = {
-    "DRAFT": ["DRAFT","warn"],
-    "SUBMITTED": ["SUBMITTED","warn"],
-    "ADMIN_APPROVED": ["ADMIN APPROVED","good"],
-    "TA_ASSIGNED": ["TA ASSIGNED","good"],
-    "HR_FINAL_APPROVED": ["FINAL APPROVED","good"],
-    "REJECTED": ["REJECTED","bad"]
+    "DRAFT": ["කෙටුම්පත","warn"],
+    "SUBMITTED": ["යොමු කර ඇත","warn"],
+    "ADMIN_APPROVED": ["පරිපාලක අනුමත","good"],
+    "TA_ASSIGNED_PENDING_HR": ["HR ඔවරයිඩ් අනුමැතිය බලාපොරොත්තු","warn"],
+    "TA_ASSIGNED": ["වාහන අනුයුක්ත කර ඇත","good"],
+    "TA_FIX_REQUIRED": ["TA විසින් සකස් කළ යුතුයි","warn"],
+    "HR_FINAL_APPROVED": ["අවසාන අනුමත","good"],
+    "REJECTED": ["ප්‍රතික්ෂේප","bad"]
   };
   const v = map[status] || [status, "badge"];
   return `<span class="badge ${v[1]}">${v[0]}</span>`;
 }
+
