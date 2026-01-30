@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Transport Request System</title>
+  <title>Transport Request System - Login</title>
   <link rel="stylesheet" href="assets/styles.css" />
   <script src="assets/config.js"></script>
   <script src="assets/app.js"></script>
@@ -12,58 +12,69 @@
 <header>
   <h1>Transport Request System</h1>
   <div style="display:flex; gap:8px; align-items:center;">
-    <a href="login.html">Login</a>
     <a href="register.html">Register</a>
   </div>
 </header>
 
 <div class="container">
   <div class="card">
-    <h2 style="margin:0 0 6px;">Enterprise Template</h2>
-    <p class="small" style="margin:0;">
-      Postgres + Railway Backend API + GitHub Static Web. Role-based dashboards: HOD → Admin → Transport Authority → HR → EMP.
-    </p>
-    <div class="hr"></div>
-    <div class="tabs">
-      <button class="btn" onclick="go('admin.html')">Admin</button>
-      <button class="btn" onclick="go('hod.html')">HOD</button>
-      <button class="btn" onclick="go('ta.html')">Transport Authority</button>
-      <button class="btn" onclick="go('hr.html')">HR</button>
-      <button class="btn" onclick="go('emp.html')">EMP</button>
+    <h2 style="margin:0 0 10px 0;">Login</h2>
+    <label>Email</label>
+    <input id="email" type="email" placeholder="name@company.lk" autocomplete="username" />
+    <label>Password</label>
+    <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+      <button class="btn" onclick="doLogin()">Login</button>
+      <button class="btn ghost" onclick="location.href='register.html'">Create account</button>
     </div>
-  </div>
-
-  <div class="kpi">
-    <div class="card">
-      <div class="small">Flow</div>
-      <div style="font-weight:700; font-size:14px;">HOD → Admin → TA → HR</div>
-      <div class="small">Requests move through approvals and assignments.</div>
-    </div>
-    <div class="card">
-      <div class="small">Capacity</div>
-      <div style="font-weight:700; font-size:14px;">Auto Validation</div>
-      <div class="small">TA can’t submit if capacity is not enough.</div>
-    </div>
-    <div class="card">
-      <div class="small">Reports</div>
-      <div style="font-weight:700; font-size:14px;">A4 / Font 22</div>
-      <div class="small">Route-wise + Vehicle reports after HR final approval.</div>
-    </div>
-    <div class="card">
-      <div class="small">Security</div>
-      <div style="font-weight:700; font-size:14px;">JWT + RBAC</div>
-      <div class="small">Role-based access control for all endpoints.</div>
-    </div>
+    <p class="small" id="hint" style="display:none; margin-top:12px;"></p>
   </div>
 </div>
 
 <script>
-function go(page){
-  // if not logged in, go login first
-  const t = getToken();
-  if(!t){ location.href="login.html"; return; }
-  location.href = page;
+function dashForRole(role){
+  const r = (role || '').toUpperCase();
+  if (r === 'ADMIN') return 'admin.html';
+  if (r === 'HOD') return 'hod.html';
+  if (r === 'HR') return 'hr.html';
+  if (r === 'TA' || r === 'TRANSPORT_AUTHORITY') return 'ta.html';
+  return 'emp.html';
 }
+
+async function doLogin(){
+  try{
+    const email = qs('email').value.trim();
+    const password = qs('password').value;
+    if(!email || !password) return toast('Email සහ Password දෙකම දාන්න.');
+    const res = await fetch(API_BASE_URL + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok) return toast(data.message || 'Login failed');
+    setToken(data.token);
+    // get role and redirect
+    const me = await fetch(API_BASE_URL + '/me', { headers: { 'Authorization': 'Bearer ' + getToken() }});
+    const meData = await me.json().catch(()=>({}));
+    const role = meData.role || data.role;
+    location.href = dashForRole(role);
+  }catch(e){
+    toast('Network error. Backend URL/CORS check කරන්න.');
+  }
+}
+
+// If already logged in, auto redirect by role
+(async function(){
+  const t = getToken();
+  if(!t) return;
+  try{
+    const me = await fetch(API_BASE_URL + '/me', { headers: { 'Authorization': 'Bearer ' + t }});
+    if(!me.ok) return;
+    const meData = await me.json().catch(()=>({}));
+    if(meData && meData.role) location.href = dashForRole(meData.role);
+  }catch(e){}
+})();
 </script>
 </body>
 </html>
