@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;600;700&display=swap");
 :root{
   --red:#d32f2f;
   --bg:#ffffff;
@@ -9,7 +10,7 @@
   --warn:#f59e0b;
   --bad:#dc2626;
 }
-*{ box-sizing:border-box; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+*{ box-sizing:border-box; font-family: 'Noto Sans Sinhala', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
 body{ margin:0; background:var(--bg); color:var(--text); }
 a{ color:var(--red); text-decoration:none; }
 header{
@@ -60,3 +61,8 @@ tr:last-child td{ border-bottom:none; }
   background:#111; color:#fff; padding:10px 12px; border-radius:12px;
   max-width:min(720px, calc(100vw - 30px)); display:none; z-index:99;
 }
+
+
+.table-wrap{ width:100%; overflow-x:auto; -webkit-overflow-scrolling: touch; }
+.table-wrap table{ min-width: 640px; }
+@media (max-width: 520px){ .table-wrap table{ min-width: 720px; } }

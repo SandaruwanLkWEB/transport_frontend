@@ -30,7 +30,7 @@ async function api(path, options = {}) {
   let data = {};
   try { data = text ? JSON.parse(text) : {}; } catch (e) { data = { raw: text }; }
 
-  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  if (!res.ok) { const err = new Error(data.error || `HTTP ${res.status}`); err.status = res.status; err.data = data; throw err; }
   return data;
 }
 
@@ -100,3 +100,42 @@ function statusBadge(status){
   return `<span class="badge ${v[1]}">${v[0]}</span>`;
 }
 
+
+
+// ---- Formatting helpers ----
+function fmtDate(v){
+  if(!v) return "";
+  // Accept YYYY-MM-DD or ISO
+  const s = String(v);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : s;
+}
+function fmtTime(v){
+  if(!v) return "";
+  const s = String(v);
+  // Accept HH:MM or HH:MM:SS
+  const m = s.match(/^(\d{2}:\d{2})/);
+  return m ? m[1] : s;
+}
+function routeLabel(route_id){
+  if(!route_id || !ROUTE_TREE) return "";
+  const r = (ROUTE_TREE.routes || []).find(x => String(x.id) === String(route_id));
+  if(!r) return String(route_id);
+  const no = (r.route_no || "").toString().trim();
+  const name = (r.route_name || "").toString().trim();
+  if(no && name) return `${no} - ${name}`;
+  return name || no || String(route_id);
+}
+function subLabel(sub_id){
+  if(!sub_id || !ROUTE_TREE) return "";
+  const s = (ROUTE_TREE.sub_routes || []).find(x => String(x.id) === String(sub_id));
+  return s ? (s.sub_name || String(sub_id)) : String(sub_id);
+}
+
+// Only logout for auth errors (401/403). For other errors, just show message.
+function maybeLogoutOnAuth(err){
+  const st = err && err.status;
+  if(st === 401 || st === 403){ logout(); return true; }
+  return false;
+}
