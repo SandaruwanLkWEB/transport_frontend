@@ -25,13 +25,60 @@ async function api(path, options = {}) {
   const token = getToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE_URL}${path}`, Object.assign({}, options, { headers }));
+  let res;
+  try{
+    res = await fetch(`${API_BASE_URL}${path}`, Object.assign({}, options, { headers }));
+  }catch(e){
+    // Network/CORS errors are common on first setup — don't auto logout, just show a readable message.
+    throw new Error("සර්වර් සම්බන්ධතාවය අසාර්ථකයි (Network/CORS). Railway URL සහ ALLOWED_ORIGINS පරීක්ෂා කරන්න.");
+  }
   const text = await res.text();
   let data = {};
   try { data = text ? JSON.parse(text) : {}; } catch (e) { data = { raw: text }; }
 
-  if (!res.ok) { const err = new Error(data.error || `HTTP ${res.status}`); err.status = res.status; err.data = data; throw err; }
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
   return data;
+}
+
+// ---- Formatting helpers ----
+function fmtDate(v){
+  if(!v) return "";
+  const s = String(v);
+  // if already date-only
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // ISO string like 2026-01-31T00:00:00.000Z
+  if(s.includes("T")) return s.split("T")[0];
+  // fallback
+  try{
+    const d = new Date(s);
+    if(!isNaN(d.getTime())) return d.toISOString().slice(0,10);
+  }catch(e){}
+  return s;
+}
+
+function fmtTime(v){
+  if(!v) return "";
+  const s = String(v);
+  // 21:30:00 -> 21:30
+  const m = s.match(/^(\d{2}):(\d{2})/);
+  if(m) return `${m[1]}:${m[2]}`;
+  return s;
+}
+
+function routeLabelById(route_id){
+  if(!ROUTE_TREE || !route_id) return route_id ? String(route_id) : "";
+  const r = ROUTE_TREE.routes.find(x => String(x.id) === String(route_id));
+  if(!r) return String(route_id);
+  const no = r.route_no != null ? String(r.route_no).trim() : "";
+  const name = r.route_name != null ? String(r.route_name).trim() : "";
+  return no && name ? `${no} - ${name}` : (name || no || String(route_id));
+}
+
+function gramayaLabelById(sub_route_id){
+  if(!ROUTE_TREE || !sub_route_id) return sub_route_id ? String(sub_route_id) : "";
+  const s = ROUTE_TREE.sub_routes.find(x => String(x.id) === String(sub_route_id));
+  if(!s) return String(sub_route_id);
+  return s.sub_name || String(sub_route_id);
 }
 
 async function loadMe() { return api("/me"); }
@@ -100,42 +147,3 @@ function statusBadge(status){
   return `<span class="badge ${v[1]}">${v[0]}</span>`;
 }
 
-
-
-// ---- Formatting helpers ----
-function fmtDate(v){
-  if(!v) return "";
-  // Accept YYYY-MM-DD or ISO
-  const s = String(v);
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
-  return m ? m[1] : s;
-}
-function fmtTime(v){
-  if(!v) return "";
-  const s = String(v);
-  // Accept HH:MM or HH:MM:SS
-  const m = s.match(/^(\d{2}:\d{2})/);
-  return m ? m[1] : s;
-}
-function routeLabel(route_id){
-  if(!route_id || !ROUTE_TREE) return "";
-  const r = (ROUTE_TREE.routes || []).find(x => String(x.id) === String(route_id));
-  if(!r) return String(route_id);
-  const no = (r.route_no || "").toString().trim();
-  const name = (r.route_name || "").toString().trim();
-  if(no && name) return `${no} - ${name}`;
-  return name || no || String(route_id);
-}
-function subLabel(sub_id){
-  if(!sub_id || !ROUTE_TREE) return "";
-  const s = (ROUTE_TREE.sub_routes || []).find(x => String(x.id) === String(sub_id));
-  return s ? (s.sub_name || String(sub_id)) : String(sub_id);
-}
-
-// Only logout for auth errors (401/403). For other errors, just show message.
-function maybeLogoutOnAuth(err){
-  const st = err && err.status;
-  if(st === 401 || st === 403){ logout(); return true; }
-  return false;
-}
