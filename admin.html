@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>පරිපාලක පුවරුව</title>
+  <title>පරිපාලක ඩෑෂ්බෝර්ඩ්</title>
   <link rel="stylesheet" href="assets/styles.css" />
   <script src="assets/config.js"></script>
   <script src="assets/app.js"></script>
@@ -13,7 +13,7 @@
   <h1>පරිපාලක</h1>
   <div style="display:flex; gap:8px; align-items:center;">
     <a href="index.html">මුල් පිටුව</a>
-    <button class="btn secondary small" onclick="logout()">පිටවන්න</button>
+    <button class="btn secondary small" onclick="logout()">නිවන්න</button>
   </div>
 </header>
 
@@ -22,8 +22,8 @@
 
   <div class="card">
     <div class="tabs">
-      <button class="btn active" id="tabApprovals" onclick="setTab('approvals')">අනුමත කිරීම්</button>
-      <button class="btn" id="tabMaster" onclick="setTab('master')">මාස්ටර් දත්ත</button>
+      <button class="btn active" id="tabApprovals" onclick="setTab('approvals')">අනුමත කිරීම</button>
+      <button class="btn" id="tabMaster" onclick="setTab('master')">මූලික දත්ත</button>
       <button class="btn" id="tabReports" onclick="setTab('reports')">වාර්තා</button>
     </div>
   </div>
@@ -46,7 +46,7 @@
       </div>
       <div>
         <label>සෙවීම</label>
-        <input id="reqසෙවීම" placeholder="දෙපාර්තමේන්තුව / දිනය / ID..." oninput="renderRequests()" />
+        <input id="reqSearch" placeholder="දෙපාර්තමේන්තුව / දිනය / ID..." oninput="renderRequests()" />
       </div>
     </div>
 
@@ -55,12 +55,12 @@
     </div>
 
     <div class="hr"></div>
-    <div id="reqList" class="small">Loading...</div>
+    <div id="reqList" class="small">පූරණය වෙමින්...</div>
 
     <div class="hr"></div>
 
     <div id="reqDetail" style="display:none;">
-      <h3 style="margin:0 0 10px;">ඉල්ලීමේ විස්තරය: <span id="dReqId"></span></h3>
+      <h3 style="margin:0 0 10px;">ඉල්ලීමේ විස්තර: <span id="dReqId"></span></h3>
       <div id="dMeta" class="small"></div>
       <div class="hr"></div>
       <div id="dEmployees"></div>
@@ -68,45 +68,45 @@
         <button class="btn" id="btnApprove" onclick="approveReq()">අනුමත කරන්න (පරිපාලක)</button>
         <button class="btn ghost" onclick="closeDetail()">වසන්න</button>
       </div>
-      <p class="small">පරිපාලක අනුමැතියෙන් පසු වාහන අනුයුක්තිකරණයට (TA) යයි.</p>
+      <p class="small">පරිපාලක අනුමැතියෙන් පසු වාහන අනුයුක්තිය (TA) සඳහා යයි.</p>
     </div>
   </div>
 
   <!-- Master -->
   <div class="card" id="pane_master" style="display:none;">
-    <h2 style="margin:0 0 10px;">මාස්ටර් දත්ත</h2>
+    <h2 style="margin:0 0 10px;">Master Data</h2>
 
     <div class="row">
       <div class="card" style="background:#fff; border:1px solid var(--line);">
-        <h3 style="margin:0 0 10px;">දෙපාර්තමේන්තු</h3>
+        <h3 style="margin:0 0 10px;">Departments</h3>
         <div class="row">
           <div>
-            <label>දෙපාර්තමේන්තුවේ නම</label>
+            <label>Department Name</label>
             <input id="depName" placeholder="IT Department" />
           </div>
           <div style="display:flex; align-items:end; gap:8px;">
-            <button class="btn small" onclick="createDepartment()">එකතු කරන්න</button>
-            <button class="btn small ghost" onclick="loadDepartments()">යාවත්කාලීන කරන්න</button>
+            <button class="btn small" onclick="createDepartment()">Add</button>
+            <button class="btn small ghost" onclick="loadDepartments()">Refresh</button>
           </div>
         </div>
         <div id="depList" class="small"></div>
       </div>
 
       <div class="card" style="background:#fff; border:1px solid var(--line);">
-        <h3 style="margin:0 0 10px;">රූට්</h3>
+        <h3 style="margin:0 0 10px;">Routes</h3>
         <div class="row">
           <div>
-            <label>රූට් අංකය</label>
+            <label>Route No</label>
             <input id="routeNo" placeholder="01" />
           </div>
           <div>
-            <label>රූට් නම</label>
+            <label>Route Name</label>
             <input id="routeName" placeholder="Galle" />
           </div>
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <button class="btn small" onclick="createRoute()">Add Route</button>
-          <button class="btn small ghost" onclick="loadRoutes()">යාවත්කාලීන කරන්න</button>
+          <button class="btn small ghost" onclick="loadRoutes()">Refresh</button>
         </div>
         <div class="hr"></div>
         <div id="routeList" class="small"></div>
@@ -127,7 +127,7 @@
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="btn small" onclick="createSubRoute()">Add Sub Route</button>
-        <button class="btn small ghost" onclick="loadSubRoutes()">යාවත්කාලීන කරන්න</button>
+        <button class="btn small ghost" onclick="loadSubRoutes()">Refresh</button>
       </div>
       <div class="hr"></div>
       <div id="subList" class="small"></div>
@@ -137,7 +137,7 @@
 
   <!-- Reports -->
   <div class="card" id="pane_reports" style="display:none;">
-    <h2 style="margin:0 0 10px;">වාර්තා</h2>
+    <h2 style="margin:0 0 10px;">Reports</h2>
     <div class="small">HR Final Approval පස්සේම download කරන්න.</div>
     <div class="row">
       <div>
@@ -175,6 +175,8 @@ function setTab(tab){
 async function guard(){
   ME = await guardRole("ADMIN");
   if(!ME) return;
+  // For route/sub-route name rendering
+  await loadRouteTree();
   qs("meBox").innerHTML = `<b>${ME.role}</b> | ${ME.email}`;
 }
 
@@ -186,26 +188,26 @@ async function loadRequests(){
 
 function renderRequests(){
   const status = qs("reqStatus").value;
-  const q = (qs("reqසෙවීම").value||"").toLowerCase();
+  const q = (qs("reqSearch").value||"").toLowerCase();
   const list = REQS
     .filter(r => !status || r.status===status)
     .filter(r => (String(r.id).includes(q) || (r.department_name||"").toLowerCase().includes(q) || (r.request_date||"").toLowerCase().includes(q)));
 
-  if(list.length===0){ qs("reqList").innerHTML = "<span class='badge warn'>No matching requests</span>"; return; }
+  if(list.length===0){ qs("reqList").innerHTML = "<span class='badge warn'>ගැලපෙන ඉල්ලීම් නැත</span>"; return; }
 
-  let html = "<div class="table-wrap"><table><tr><th>ID</th><th>Date</th><th>Time</th><th>Department</th><th>Status</th><th>Action</th></tr>";
+  let html = "<table><tr><th>ID</th><th>දිනය</th><th>වේලාව</th><th>දෙපාර්තමේන්තු</th><th>තත්ත්වය</th><th>ක්‍රියාව</th></tr>";
   for(const r of list){
     const canApprove = r.status==="SUBMITTED";
     html += `<tr>
       <td>${r.id}</td>
-      <td>${r.request_date}</td>
-      <td>${r.request_time}</td>
+      <td>${fmtDate(r.request_date)}</td>
+      <td>${fmtTime(r.request_time)}</td>
       <td>${r.department_name}</td>
       <td>${statusBadge(r.status)}</td>
-      <td><button class="btn small" onclick="openDetail(${r.id})">View</button></td>
+      <td><button class="btn small" onclick="openDetail(${r.id})">බලන්න</button></td>
     </tr>`;
   }
-  html += "</table></div>";
+  html += "</table>";
   qs("reqList").innerHTML = html;
 }
 
@@ -215,18 +217,18 @@ async function openDetail(id){
     CURRENT = d.request;
     qs("reqDetail").style.display = "";
     qs("dReqId").textContent = id;
-    qs("dMeta").innerHTML = `දෙපාර්තමේන්තුව: <b>${d.request.department_name}</b> | දිනය: <b>${fmtDate(d.request.request_date)}</b> | වේලාව: <b>${fmtTime(d.request.request_time)}</b> | තත්ත්වය: ${statusBadge(d.request.status)}`;
+    qs("dMeta").innerHTML = `දෙපාර්තමේන්තු: <b>${d.request.department_name}</b> | දිනය: <b>${fmtDate(d.request.request_date)}</b> | වේලාව: <b>${fmtTime(d.request.request_time)}</b> | තත්ත්වය: ${statusBadge(d.request.status)}`;
 
-    let html = "<div class="table-wrap"><table><tr><th>සේවකයා</th><th>සේවක අංකය</th><th>රූට්</th><th>ග්‍රාම</th></tr>";
+    let html = "<table><tr><th>සේවකයා</th><th>සේවක අංකය</th><th>රූට්</th><th>ග්‍රාම</th></tr>";
     for(const e of d.employees){
       html += `<tr>
         <td>${e.full_name}</td>
         <td>${e.emp_no}</td>
-        <td>${e.effective_route_id ? routeLabel(e.effective_route_id) : ""}</td>
-        <td>${e.effective_sub_route_id ? subLabel(e.effective_sub_route_id) : ""}</td>
+        <td>${routeLabelById(e.effective_route_id ?? e.route_id)}</td>
+        <td>${gramayaLabelById(e.effective_sub_route_id ?? e.sub_route_id)}</td>
       </tr>`;
     }
-    html += "</table></div>";
+    html += "</table>";
     qs("dEmployees").innerHTML = html;
 
     qs("btnApprove").disabled = d.request.status !== "SUBMITTED";
@@ -247,7 +249,7 @@ async function approveReq(){
   try{
     if(!CURRENT) return;
     await api(`/admin/requests/${CURRENT.id}/approve`, {method:"POST"});
-    toast("Approved");
+    toast("අනුමත විය");
     await loadRequests();
     await openDetail(CURRENT.id);
   }catch(e){ toast(e.message); }
@@ -257,7 +259,7 @@ async function approveReq(){
 async function loadDepartments(){
   const d = await api("/admin/departments");
   DEPS = d.departments || [];
-  let html = "<div class="table-wrap"><table><tr><th>Name</th><th>Action</th></tr>";
+  let html = "<table><tr><th>Name</th><th>Action</th></tr>";
   for(const dep of DEPS){
     html += `<tr>
       <td><input id="dep_${dep.id}" value="${(dep.name||"").replace(/"/g,'&quot;')}" /></td>
@@ -267,7 +269,7 @@ async function loadDepartments(){
       </td>
     </tr>`;
   }
-  html += "</table></div>";
+  html += "</table>";
   qs("depList").innerHTML = html;
 
   // refresh dropdown for subroutes too
@@ -280,7 +282,7 @@ async function createDepartment(){
     if(!name) throw new Error("Name required");
     await api("/admin/departments", {method:"POST", body: JSON.stringify({name})});
     qs("depName").value="";
-    toast("Department added");
+    toast("දෙපාර්තමේන්තුව එකතු විය");
     await loadDepartments();
   }catch(e){ toast(e.message); }
 }
@@ -289,14 +291,14 @@ async function updateDepartment(id){
   try{
     const name = qs("dep_"+id).value.trim();
     await api(`/admin/departments/${id}`, {method:"PATCH", body: JSON.stringify({name})});
-    toast("Saved");
+    toast("සුරකින ලදී");
     await loadDepartments();
   }catch(e){ toast(e.message); }
 }
 async function deleteDepartment(id){
   try{
     await api(`/admin/departments/${id}`, {method:"DELETE"});
-    toast("Deleted");
+    toast("ඉවත් කරන ලදී");
     await loadDepartments();
   }catch(e){ toast(e.message); }
 }
@@ -304,7 +306,7 @@ async function deleteDepartment(id){
 async function loadRoutes(){
   const d = await api("/admin/routes");
   ROUTES = d.routes || [];
-  let html = "<div class="table-wrap"><table><tr><th>No</th><th>Name</th><th>Action</th></tr>";
+  let html = "<table><tr><th>No</th><th>Name</th><th>Action</th></tr>";
   for(const r of ROUTES){
     html += `<tr>
       <td><input id="rno_${r.id}" value="${(r.route_no||"").replace(/"/g,'&quot;')}" /></td>
@@ -315,11 +317,11 @@ async function loadRoutes(){
       </td>
     </tr>`;
   }
-  html += "</table></div>";
+  html += "</table>";
   qs("routeList").innerHTML = html;
 
   // dropdown for subroutes
-  let opt = '<option value="">-- රූට් තෝරන්න --</option>';
+  let opt = '<option value="">-- Select Route --</option>';
   for(const r of ROUTES){
     opt += `<option value="${r.id}">${r.route_no} - ${r.route_name}</option>`;
   }
@@ -335,7 +337,7 @@ async function createRoute(){
     if(!route_no || !route_name) throw new Error("Route no & name required");
     await api("/admin/routes", {method:"POST", body: JSON.stringify({route_no, route_name})});
     qs("routeNo").value=""; qs("routeName").value="";
-    toast("Route added");
+    toast("රූට් එකතු විය");
     await loadRoutes();
   }catch(e){ toast(e.message); }
 }
@@ -345,14 +347,14 @@ async function updateRoute(id){
     const route_no = qs("rno_"+id).value.trim();
     const route_name = qs("rname_"+id).value.trim();
     await api(`/admin/routes/${id}`, {method:"PATCH", body: JSON.stringify({route_no, route_name})});
-    toast("Saved");
+    toast("සුරකින ලදී");
     await loadRoutes();
   }catch(e){ toast(e.message); }
 }
 async function deleteRoute(id){
   try{
     await api(`/admin/routes/${id}`, {method:"DELETE"});
-    toast("Deleted");
+    toast("ඉවත් කරන ලදී");
     await loadRoutes();
     await loadSubRoutes();
   }catch(e){ toast(e.message); }
@@ -364,7 +366,7 @@ async function loadSubRoutes(){
     if(!routeId){ qs("subList").innerHTML = "<span class='badge warn'>Select route</span>"; return; }
     const d = await api(`/admin/routes/${routeId}/subroutes`);
     SUBS = d.sub_routes || [];
-    let html = "<div class="table-wrap"><table><tr><th>Sub Name</th><th>Action</th></tr>";
+    let html = "<table><tr><th>Sub Name</th><th>Action</th></tr>";
     for(const s of SUBS){
       html += `<tr>
         <td><input id="sname_${s.id}" value="${(s.sub_name||"").replace(/"/g,'&quot;')}" /></td>
@@ -374,7 +376,7 @@ async function loadSubRoutes(){
         </td>
       </tr>`;
     }
-    html += "</table></div>";
+    html += "</table>";
     qs("subList").innerHTML = html;
     localStorage.removeItem("routesTree");
   }catch(e){ toast(e.message); }
@@ -388,7 +390,7 @@ async function createSubRoute(){
     if(!sub_name) throw new Error("Sub name required");
     await api(`/admin/routes/${routeId}/subroutes`, {method:"POST", body: JSON.stringify({sub_name})});
     qs("subName").value="";
-    toast("Sub route added");
+    toast("ග්‍රාම එකතු විය");
     await loadSubRoutes();
   }catch(e){ toast(e.message); }
 }
@@ -397,14 +399,14 @@ async function updateSub(id){
   try{
     const sub_name = qs("sname_"+id).value.trim();
     await api(`/admin/subroutes/${id}`, {method:"PATCH", body: JSON.stringify({sub_name})});
-    toast("Saved");
+    toast("සුරකින ලදී");
     await loadSubRoutes();
   }catch(e){ toast(e.message); }
 }
 async function deleteSub(id){
   try{
     await api(`/admin/subroutes/${id}`, {method:"DELETE"});
-    toast("Deleted");
+    toast("ඉවත් කරන ලදී");
     await loadSubRoutes();
   }catch(e){ toast(e.message); }
 }
@@ -412,7 +414,7 @@ async function deleteSub(id){
 // Reports
 function downloadRouteReport(){
   const id = qs("repReqId").value.trim();
-  if(!id){ toast("Enter request id"); return; }
+  if(!id){ toast("Request ID ඇතුල් කරන්න"); return; }
   window.open(`${API_BASE_URL}/reports/route-wise?request_id=${encodeURIComponent(id)}`, "_blank");
 }
 function downloadVehicleReport(){
@@ -424,12 +426,11 @@ function downloadVehicleReport(){
 (async function init(){
   try{
     await guard();
-    await loadRouteTree();
     await loadRequests();
     await loadDepartments();
     await loadRoutes();
     await loadSubRoutes();
-  }catch(e){ toast(e.message); if(!maybeLogoutOnAuth(e)){} }
+  }catch(e){ toast(e.message); logout(); }
 })();
 </script>
 </body>
