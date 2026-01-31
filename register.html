@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ලියාපදිංචි වන්න</title>
+  <title>ලියාපදිංචි වීම</title>
   <link rel="stylesheet" href="assets/styles.css" />
   <script src="assets/config.js"></script>
   <script src="assets/app.js"></script>
@@ -57,7 +57,7 @@
 </div>
 
 <script>
-async function loadDepartments(){
+async function loadදෙපාර්තමේන්තුවs(){
   const d = await api("/public/departments");
   qs("department_id").innerHTML = optionHTML(
     d.departments.map(x => ({ id:x.id, label:x.name })),
@@ -76,12 +76,12 @@ async function register(){
     };
     await api("/auth/register", { method:"POST", body: JSON.stringify(body) });
     toast("ලියාපදිංචිය යවනු ලැබීය. Wait for HOD approval.");
-    setTimeout(()=> location.href="login.html", 900);
+    setවේලාවout(()=> location.href="login.html", 900);
   }catch(e){ toast(e.message); }
 }
 
 (async function init(){
-  try{ await loadDepartments(); } catch(e){ toast(e.message); }
+  try{ await loadදෙපාර්තමේන්තුවs(); } catch(e){ toast(e.message); }
 })();
 </script>
 </body>

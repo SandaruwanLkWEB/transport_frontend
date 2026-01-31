@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin Dashboard</title>
+  <title>පරිපාලක පුවරුව</title>
   <link rel="stylesheet" href="assets/styles.css" />
   <script src="assets/config.js"></script>
   <script src="assets/app.js"></script>
 </head>
 <body>
 <header>
-  <h1>Admin</h1>
+  <h1>පරිපාලක</h1>
   <div style="display:flex; gap:8px; align-items:center;">
-    <a href="index.html">Home</a>
-    <button class="btn secondary small" onclick="logout()">Logout</button>
+    <a href="index.html">මුල් පිටුව</a>
+    <button class="btn secondary small" onclick="logout()">පිටවන්න</button>
   </div>
 </header>
 
@@ -22,21 +22,21 @@
 
   <div class="card">
     <div class="tabs">
-      <button class="btn active" id="tabApprovals" onclick="setTab('approvals')">Approvals</button>
-      <button class="btn" id="tabMaster" onclick="setTab('master')">Master Data</button>
-      <button class="btn" id="tabReports" onclick="setTab('reports')">Reports</button>
+      <button class="btn active" id="tabApprovals" onclick="setTab('approvals')">අනුමත කිරීම්</button>
+      <button class="btn" id="tabMaster" onclick="setTab('master')">මාස්ටර් දත්ත</button>
+      <button class="btn" id="tabReports" onclick="setTab('reports')">වාර්තා</button>
     </div>
   </div>
 
   <!-- Approvals -->
   <div class="card" id="pane_approvals">
-    <h2 style="margin:0 0 10px;">Requests (All Departments)</h2>
+    <h2 style="margin:0 0 10px;">ඉල්ලීම් (සියලු දෙපාර්තමේන්තු)</h2>
 
     <div class="row">
       <div>
-        <label>Filter by status</label>
+        <label>තත්ත්වය අනුව පෙරහන්</label>
         <select id="reqStatus" onchange="renderRequests()">
-          <option value="">All</option>
+          <option value="">සියල්ල</option>
           <option value="SUBMITTED">SUBMITTED</option>
           <option value="DRAFT">DRAFT</option>
           <option value="ADMIN_APPROVED">ADMIN_APPROVED</option>
@@ -45,13 +45,13 @@
         </select>
       </div>
       <div>
-        <label>Search</label>
-        <input id="reqSearch" placeholder="dept / date / id..." oninput="renderRequests()" />
+        <label>සෙවීම</label>
+        <input id="reqසෙවීම" placeholder="දෙපාර්තමේන්තුව / දිනය / ID..." oninput="renderRequests()" />
       </div>
     </div>
 
     <div style="display:flex; gap:8px; flex-wrap:wrap;">
-      <button class="btn ghost" onclick="loadRequests()">Refresh</button>
+      <button class="btn ghost" onclick="loadRequests()">යාවත්කාලීන කරන්න</button>
     </div>
 
     <div class="hr"></div>
@@ -60,53 +60,53 @@
     <div class="hr"></div>
 
     <div id="reqDetail" style="display:none;">
-      <h3 style="margin:0 0 10px;">Request Detail: <span id="dReqId"></span></h3>
+      <h3 style="margin:0 0 10px;">ඉල්ලීමේ විස්තරය: <span id="dReqId"></span></h3>
       <div id="dMeta" class="small"></div>
       <div class="hr"></div>
       <div id="dEmployees"></div>
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
-        <button class="btn" id="btnApprove" onclick="approveReq()">Approve (ADMIN)</button>
-        <button class="btn ghost" onclick="closeDetail()">Close</button>
+        <button class="btn" id="btnApprove" onclick="approveReq()">අනුමත කරන්න (පරිපාලක)</button>
+        <button class="btn ghost" onclick="closeDetail()">වසන්න</button>
       </div>
-      <p class="small">Admin approval පස්සේ TA assignment වලට යනවා.</p>
+      <p class="small">පරිපාලක අනුමැතියෙන් පසු වාහන අනුයුක්තිකරණයට (TA) යයි.</p>
     </div>
   </div>
 
   <!-- Master -->
   <div class="card" id="pane_master" style="display:none;">
-    <h2 style="margin:0 0 10px;">Master Data</h2>
+    <h2 style="margin:0 0 10px;">මාස්ටර් දත්ත</h2>
 
     <div class="row">
       <div class="card" style="background:#fff; border:1px solid var(--line);">
-        <h3 style="margin:0 0 10px;">Departments</h3>
+        <h3 style="margin:0 0 10px;">දෙපාර්තමේන්තු</h3>
         <div class="row">
           <div>
-            <label>Department Name</label>
+            <label>දෙපාර්තමේන්තුවේ නම</label>
             <input id="depName" placeholder="IT Department" />
           </div>
           <div style="display:flex; align-items:end; gap:8px;">
-            <button class="btn small" onclick="createDepartment()">Add</button>
-            <button class="btn small ghost" onclick="loadDepartments()">Refresh</button>
+            <button class="btn small" onclick="createDepartment()">එකතු කරන්න</button>
+            <button class="btn small ghost" onclick="loadDepartments()">යාවත්කාලීන කරන්න</button>
           </div>
         </div>
         <div id="depList" class="small"></div>
       </div>
 
       <div class="card" style="background:#fff; border:1px solid var(--line);">
-        <h3 style="margin:0 0 10px;">Routes</h3>
+        <h3 style="margin:0 0 10px;">රූට්</h3>
         <div class="row">
           <div>
-            <label>Route No</label>
+            <label>රූට් අංකය</label>
             <input id="routeNo" placeholder="01" />
           </div>
           <div>
-            <label>Route Name</label>
+            <label>රූට් නම</label>
             <input id="routeName" placeholder="Galle" />
           </div>
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <button class="btn small" onclick="createRoute()">Add Route</button>
-          <button class="btn small ghost" onclick="loadRoutes()">Refresh</button>
+          <button class="btn small ghost" onclick="loadRoutes()">යාවත්කාලීන කරන්න</button>
         </div>
         <div class="hr"></div>
         <div id="routeList" class="small"></div>
@@ -127,7 +127,7 @@
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="btn small" onclick="createSubRoute()">Add Sub Route</button>
-        <button class="btn small ghost" onclick="loadSubRoutes()">Refresh</button>
+        <button class="btn small ghost" onclick="loadSubRoutes()">යාවත්කාලීන කරන්න</button>
       </div>
       <div class="hr"></div>
       <div id="subList" class="small"></div>
@@ -137,7 +137,7 @@
 
   <!-- Reports -->
   <div class="card" id="pane_reports" style="display:none;">
-    <h2 style="margin:0 0 10px;">Reports</h2>
+    <h2 style="margin:0 0 10px;">වාර්තා</h2>
     <div class="small">HR Final Approval පස්සේම download කරන්න.</div>
     <div class="row">
       <div>
@@ -186,14 +186,14 @@ async function loadRequests(){
 
 function renderRequests(){
   const status = qs("reqStatus").value;
-  const q = (qs("reqSearch").value||"").toLowerCase();
+  const q = (qs("reqසෙවීම").value||"").toLowerCase();
   const list = REQS
     .filter(r => !status || r.status===status)
     .filter(r => (String(r.id).includes(q) || (r.department_name||"").toLowerCase().includes(q) || (r.request_date||"").toLowerCase().includes(q)));
 
   if(list.length===0){ qs("reqList").innerHTML = "<span class='badge warn'>No matching requests</span>"; return; }
 
-  let html = "<table><tr><th>ID</th><th>Date</th><th>Time</th><th>Department</th><th>Status</th><th>Action</th></tr>";
+  let html = "<div class="table-wrap"><table><tr><th>ID</th><th>Date</th><th>Time</th><th>Department</th><th>Status</th><th>Action</th></tr>";
   for(const r of list){
     const canApprove = r.status==="SUBMITTED";
     html += `<tr>
@@ -205,7 +205,7 @@ function renderRequests(){
       <td><button class="btn small" onclick="openDetail(${r.id})">View</button></td>
     </tr>`;
   }
-  html += "</table>";
+  html += "</table></div>";
   qs("reqList").innerHTML = html;
 }
 
@@ -215,25 +215,25 @@ async function openDetail(id){
     CURRENT = d.request;
     qs("reqDetail").style.display = "";
     qs("dReqId").textContent = id;
-    qs("dMeta").innerHTML = `Dept: <b>${d.request.department_name}</b> | Date: <b>${d.request.request_date}</b> | Time: <b>${d.request.request_time}</b> | Status: ${statusBadge(d.request.status)}`;
+    qs("dMeta").innerHTML = `දෙපාර්තමේන්තුව: <b>${d.request.department_name}</b> | දිනය: <b>${fmtDate(d.request.request_date)}</b> | වේලාව: <b>${fmtTime(d.request.request_time)}</b> | තත්ත්වය: ${statusBadge(d.request.status)}`;
 
-    let html = "<table><tr><th>Employee</th><th>Emp No</th><th>Route</th><th>Sub</th></tr>";
+    let html = "<div class="table-wrap"><table><tr><th>සේවකයා</th><th>සේවක අංකය</th><th>රූට්</th><th>ග්‍රාම</th></tr>";
     for(const e of d.employees){
       html += `<tr>
         <td>${e.full_name}</td>
         <td>${e.emp_no}</td>
-        <td>${e.effective_route_id ?? ""}</td>
-        <td>${e.effective_sub_route_id ?? ""}</td>
+        <td>${e.effective_route_id ? routeLabel(e.effective_route_id) : ""}</td>
+        <td>${e.effective_sub_route_id ? subLabel(e.effective_sub_route_id) : ""}</td>
       </tr>`;
     }
-    html += "</table>";
+    html += "</table></div>";
     qs("dEmployees").innerHTML = html;
 
     qs("btnApprove").disabled = d.request.status !== "SUBMITTED";
     if(d.request.status !== "SUBMITTED"){
-      qs("btnApprove").textContent = "Approve (ADMIN)";
+      qs("btnApprove").textContent = "අනුමත කරන්න (පරිපාලක)";
     }else{
-      qs("btnApprove").textContent = "Approve (ADMIN)";
+      qs("btnApprove").textContent = "අනුමත කරන්න (පරිපාලක)";
     }
   }catch(e){ toast(e.message); }
 }
@@ -257,7 +257,7 @@ async function approveReq(){
 async function loadDepartments(){
   const d = await api("/admin/departments");
   DEPS = d.departments || [];
-  let html = "<table><tr><th>Name</th><th>Action</th></tr>";
+  let html = "<div class="table-wrap"><table><tr><th>Name</th><th>Action</th></tr>";
   for(const dep of DEPS){
     html += `<tr>
       <td><input id="dep_${dep.id}" value="${(dep.name||"").replace(/"/g,'&quot;')}" /></td>
@@ -267,7 +267,7 @@ async function loadDepartments(){
       </td>
     </tr>`;
   }
-  html += "</table>";
+  html += "</table></div>";
   qs("depList").innerHTML = html;
 
   // refresh dropdown for subroutes too
@@ -304,7 +304,7 @@ async function deleteDepartment(id){
 async function loadRoutes(){
   const d = await api("/admin/routes");
   ROUTES = d.routes || [];
-  let html = "<table><tr><th>No</th><th>Name</th><th>Action</th></tr>";
+  let html = "<div class="table-wrap"><table><tr><th>No</th><th>Name</th><th>Action</th></tr>";
   for(const r of ROUTES){
     html += `<tr>
       <td><input id="rno_${r.id}" value="${(r.route_no||"").replace(/"/g,'&quot;')}" /></td>
@@ -315,11 +315,11 @@ async function loadRoutes(){
       </td>
     </tr>`;
   }
-  html += "</table>";
+  html += "</table></div>";
   qs("routeList").innerHTML = html;
 
   // dropdown for subroutes
-  let opt = '<option value="">-- Select Route --</option>';
+  let opt = '<option value="">-- රූට් තෝරන්න --</option>';
   for(const r of ROUTES){
     opt += `<option value="${r.id}">${r.route_no} - ${r.route_name}</option>`;
   }
@@ -364,7 +364,7 @@ async function loadSubRoutes(){
     if(!routeId){ qs("subList").innerHTML = "<span class='badge warn'>Select route</span>"; return; }
     const d = await api(`/admin/routes/${routeId}/subroutes`);
     SUBS = d.sub_routes || [];
-    let html = "<table><tr><th>Sub Name</th><th>Action</th></tr>";
+    let html = "<div class="table-wrap"><table><tr><th>Sub Name</th><th>Action</th></tr>";
     for(const s of SUBS){
       html += `<tr>
         <td><input id="sname_${s.id}" value="${(s.sub_name||"").replace(/"/g,'&quot;')}" /></td>
@@ -374,7 +374,7 @@ async function loadSubRoutes(){
         </td>
       </tr>`;
     }
-    html += "</table>";
+    html += "</table></div>";
     qs("subList").innerHTML = html;
     localStorage.removeItem("routesTree");
   }catch(e){ toast(e.message); }
@@ -424,11 +424,12 @@ function downloadVehicleReport(){
 (async function init(){
   try{
     await guard();
+    await loadRouteTree();
     await loadRequests();
     await loadDepartments();
     await loadRoutes();
     await loadSubRoutes();
-  }catch(e){ toast(e.message); logout(); }
+  }catch(e){ toast(e.message); if(!maybeLogoutOnAuth(e)){} }
 })();
 </script>
 </body>

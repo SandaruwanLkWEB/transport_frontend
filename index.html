@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>පිවිසෙන්න</title>
+  <title>පද්ධතියට පිවිසීම</title>
   <link rel="stylesheet" href="assets/styles.css" />
   <script src="assets/config.js"></script>
   <script src="assets/app.js"></script>
 </head>
 <body>
 <header>
-  <h1>පිවිසෙන්න</h1>
+  <h1>පද්ධතියට පිවිසෙන්න</h1>
   <div style="display:flex; gap:8px; align-items:center;">
     <a href="register.html">ලියාපදිංචි වන්න</a>
     <a href="index.html">මුල් පිටුව</a>
@@ -24,7 +24,7 @@
     <label>මුරපදය</label>
     <input id="password" type="password" placeholder="••••••••" />
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
-      <button class="btn" onclick="doLogin()">පිවිසෙන්න</button>
+      <button class="btn" onclick="doපිවිසෙන්න()">පිවිසෙන්න</button>
       <button class="btn ghost" onclick="location.href='register.html'">ගිණුමක් තනන්න</button>
     </div>
     <div class="hr"></div>
@@ -40,7 +40,7 @@ function dashForRole(role){
   return map[role] || "index.html";
 }
 
-async function doLogin(){
+async function doපිවිසෙන්න(){
   try{
     const d = await api("/auth/login", {
       method:"POST",

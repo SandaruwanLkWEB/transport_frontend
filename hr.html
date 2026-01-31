@@ -23,7 +23,7 @@
   <div class="card">
     <div class="tabs">
       <button class="btn active" id="tabඅනුමත කරන්න" onclick="setTab('approve')">Final Approvals</button>
-      <button class="btn" id="tabReports" onclick="setTab('reports')">Reports</button>
+      <button class="btn" id="tabවාර්තා" onclick="setTab('reports')">වාර්තා</button>
     </div>
   </div>
 
@@ -37,8 +37,8 @@
   </div>
 
   <div class="card" id="pane_reports" style="display:none;">
-    <h2 style="margin:0 0 10px;">බාගත කරන්න Reports</h2>
-    <div class="small">Reports download කරන්නේ HR Final Approval පස්සේම.</div>
+    <h2 style="margin:0 0 10px;">බාගත කරන්න වාර්තා</h2>
+    <div class="small">වාර්තා download කරන්නේ HR Final Approval පස්සේම.</div>
     <div class="row">
       <div>
         <label>Request ID</label>
@@ -82,30 +82,30 @@ async function loadTARequests(){
 
 function render(){
   if(LIST.length===0){ qs("listBox").innerHTML = "<span class='badge good'>බලාපොරොත්තු වූ ඉල්ලීම් නැත</span>"; return; }
-  let html = "<table><tr><th>ID</th><th>දිනය</th><th>වේලාව</th><th>දෙපාර්තමේන්තුව</th><th>තත්ත්වය</th><th>ක්‍රියාව</th></tr>";
+  let html = "<div class="table-wrap"><table><tr><th>ID</th><th>දිනය</th><th>වේලාව</th><th>දෙපාර්තමේන්තුව</th><th>තත්ත්වය</th><th>ක්‍රියාව</th></tr>";
   for(const r of LIST){
     html += `<tr>
       <td>${r.id}</td>
-      <td>${r.request_date}</td>
-      <td>${r.request_time}</td>
+      <td>${fmtDate(r.request_date)}</td>
+      <td>${fmtTime(r.request_time)}</td>
       <td>${r.department_name}</td>
       <td>${statusBadge(r.status)}</td>
       <td>
         ${r.status==="TA_ASSIGNED_PENDING_HR" ? `
-        <button class="btn small" onclick="overApprove(${r.id})">ඔවරයිඩ් අනුමත කරන්න</button>
-        <button class="btn small secondary" onclick="overReject(${r.id})">ඔවරයිඩ් ප්‍රතික්ෂේප කරන්න</button>
+        <button class="btn small" onclick="overඅනුමත(${r.id})">ඔවරයිඩ් අනුමත කරන්න</button>
+        <button class="btn small secondary" onclick="overප්‍රතික්ෂේප(${r.id})">ඔවරයිඩ් ප්‍රතික්ෂේප කරන්න</button>
       ` : `
-        <button class="btn small" onclick="finalApprove(${r.id})">අවසාන අනුමැතිය</button>
+        <button class="btn small" onclick="finalඅනුමත(${r.id})">අවසාන අනුමැතිය</button>
       `}
       </td>
     </tr>`;
   }
-  html += "</table>";
+  html += "</table></div>";
   qs("listBox").innerHTML = html;
 }
 
 
-async function overApprove(id){
+async function overඅනුමත(id){
   try{
     await api(`/hr/requests/${id}/overbook/approve`, {method:"POST"});
     toast("ඔවරයිඩ් (+1/+2) අනුමත කරන ලදී. දැන් අවසාන අනුමැතිය ලබා දිය හැක.");
@@ -113,7 +113,7 @@ async function overApprove(id){
   }catch(e){ toast(e.message); }
 }
 
-async function overReject(id){
+async function overප්‍රතික්ෂේප(id){
   try{
     await api(`/hr/requests/${id}/overbook/reject`, {method:"POST"});
     toast("ඔවරයිඩ් ප්‍රතික්ෂේප කරන ලදී. TA වෙත නැවත යවයි (වාහන අමතර දාන්න/සකස් කරන්න).");
@@ -122,7 +122,7 @@ async function overReject(id){
 }
 
 
-async function finalApprove(id){
+async function finalඅනුමත(id){
   try{
     await api(`/hr/requests/${id}/final-approve`, {method:"POST"});
     toast("අවසාන අනුමැතිය ලබා දුන්නා. වාර්තා සූදානම්.");
@@ -146,7 +146,7 @@ function downloadVehicleReport(){
   try{
     await guard();
     await loadTARequests();
-  }catch(e){ toast(e.message); logout(); }
+  }catch(e){ toast(e.message); if(!maybeLogoutOnAuth(e)){} }
 })();
 </script>
 </body>

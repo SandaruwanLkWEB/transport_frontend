@@ -95,7 +95,7 @@ async function loadToday(){
   try{
     await guard();
     await loadToday();
-  }catch(e){ toast(e.message); logout(); }
+  }catch(e){ toast(e.message); if(!maybeLogoutOnAuth(e)){} }
 })();
 </script>
 </body>
