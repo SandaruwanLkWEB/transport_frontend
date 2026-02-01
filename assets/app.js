@@ -26,6 +26,9 @@ async function api(path, options = {}) {
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const base = (API_BASE_URL || "").replace(/\/$/, "");
+  if(!base || base.includes("YOUR_RAILWAY_BACKEND_URL")){
+    throw new Error("පද්ධතිය සකස් කර නැත. API ලිපිනය (API_BASE_URL) නිවැරදි කරන්න.");
+  }
   let res, text, data;
   try{
     res = await fetch(`${base}${path}`, Object.assign({}, options, { headers }));
@@ -50,10 +53,22 @@ async function api(path, options = {}) {
 async function loadMe() { return api("/me"); }
 
 async function guardRole(role){
-  const me = await loadMe();
-  if(!me.me || me.me.role !== role){ location.href="login.html"; return null; }
-  return me.me;
+  try{
+    const me = await loadMe();
+    const r = (me.me && me.me.role ? String(me.me.role).toUpperCase() : "");
+    if(!r || r !== String(role).toUpperCase()){
+      // role mismatch → go to login (do not clear token here)
+      location.href="login.html";
+      return null;
+    }
+    return me.me;
+  }catch(e){
+    // On network/CORS/config errors, do not bounce back to login endlessly
+    toast(e.message || "දත්ත ලබා ගැනීම අසමත් විය");
+    return null;
+  }
 }
+
 
 function logout(){
   clearToken();
