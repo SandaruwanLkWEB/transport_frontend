@@ -26,9 +26,6 @@ async function api(path, options = {}) {
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const base = (API_BASE_URL || "").replace(/\/$/, "");
-  if(!base || base.includes("YOUR_RAILWAY_BACKEND_URL")){
-    throw new Error("පද්ධතිය සකස් කර නැත. API ලිපිනය (API_BASE_URL) නිවැරදි කරන්න.");
-  }
   let res, text, data;
   try{
     res = await fetch(`${base}${path}`, Object.assign({}, options, { headers }));
@@ -39,11 +36,16 @@ async function api(path, options = {}) {
     throw new Error("ජාල/සම්බන්ධතා ගැටලුවක්. කරුණාකර නැවත උත්සාහ කරන්න.");
   }
 
-  // Only logout on real auth errors
-  if (res.status === 401 || res.status === 403){
+  // Auth handling: avoid redirect loops on 403; only force logout on 401
+  const onLogin = /(^|\/)login\.html$/.test(location.pathname);
+  if (res.status === 401){
     clearToken();
-    location.href = "login.html";
+    if(!onLogin) location.href = "login.html";
     throw new Error("නැවත ඇතුල් වන්න.");
+  }
+  if (res.status === 403){
+    // Keep token; show proper message (e.g., inactive account / role blocked)
+    throw new Error(data.error || data.message || "අවසර නැත.");
   }
 
   if (!res.ok) throw new Error(data.error || data.message || `HTTP ${res.status}`);
@@ -55,20 +57,26 @@ async function loadMe() { return api("/me"); }
 async function guardRole(role){
   try{
     const me = await loadMe();
-    const r = (me.me && me.me.role ? String(me.me.role).toUpperCase() : "");
-    if(!r || r !== String(role).toUpperCase()){
-      // role mismatch → go to login (do not clear token here)
-      location.href="login.html";
+    if(!me.me){
+      clearToken();
+      location.href = "login.html";
+      return null;
+    }
+    if(me.me.role !== role){
+      // Role mismatch: likely wrong account or wrong backend
+      toast("භූමිකාව නොගැළපේ. කරුණාකර නිවැරදි ගිණුමෙන් ඇතුල් වන්න.");
+      location.href = "login.html";
       return null;
     }
     return me.me;
   }catch(e){
-    // On network/CORS/config errors, do not bounce back to login endlessly
-    toast(e.message || "දත්ත ලබා ගැනීම අසමත් විය");
+    // If /me fails due to wrong API URL or CORS, don't infinite-loop
+    toast(e.message || "සම්බන්ධතාවය අසමත් විය");
+    clearToken();
+    location.href = "login.html";
     return null;
   }
 }
-
 
 function logout(){
   clearToken();
