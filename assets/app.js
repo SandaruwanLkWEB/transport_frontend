@@ -25,34 +25,16 @@ async function api(path, options = {}) {
   const token = getToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const base = (API_BASE_URL || "").replace(/\/$/, "");
-  let res, text, data;
-  try{
-    res = await fetch(`${base}${path}`, Object.assign({}, options, { headers }));
-    text = await res.text();
-    try { data = text ? JSON.parse(text) : {}; } catch (e) { data = { raw: text }; }
-  }catch(e){
-    // Network / CORS / DNS issues
-    throw new Error("ජාල/සම්බන්ධතා ගැටලුවක්. කරුණාකර නැවත උත්සාහ කරන්න.");
-  }
+  const res = await fetch(`${API_BASE_URL}${path}`, Object.assign({}, options, { headers }));
+  const text = await res.text();
+  let data = {};
+  try { data = text ? JSON.parse(text) : {}; } catch (e) { data = { raw: text }; }
 
-  // Security/session handling:
-  // - Logout ONLY on 401 (expired/invalid token)
-  // - Do NOT logout on 403 (Forbidden). 403 can happen when a user opens a page
-  //   that is not allowed for their role, or HR/TA tries a restricted action.
-  //   Auto-logout causes the "login -> dashboard -> login" loop.
-  if (res.status === 401) {
-    // If there was a token, it is invalid/expired.
-    if (token) clearToken();
-    location.href = "login.html";
-    throw new Error("සැසිය අවසන් විය. කරුණාකර නැවත ඇතුල් වන්න.");
+  if (!res.ok) {
+    const err = new Error(data.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
   }
-  if (res.status === 403) {
-    // Keep token; show a proper message.
-    throw new Error(data.error || data.message || "මෙම ක්‍රියාව සඳහා ඔබට අවසර නැහැ.");
-  }
-
-  if (!res.ok) throw new Error(data.error || data.message || `HTTP ${res.status}`);
   return data;
 }
 
@@ -122,25 +104,3 @@ function statusBadge(status){
   return `<span class="badge ${v[1]}">${v[0]}</span>`;
 }
 
-
-
-function fmtDate(s){ if(!s) return ''; if(typeof s==='string' && s.includes('T')) return s.split('T')[0]; return s; }
-function fmtTime(s){ if(!s) return ''; if(typeof s==='string' && s.length>=5) return s.slice(0,5); return s; }
-function routeLabel(r){ if(!r) return ''; const no=(r.route_no||'').trim(); const name=(r.route_name||'').trim(); return (no&&name)?(`${no} - ${name}`):(name||no||''); }
-
-
-// ---- Admin: HOD registration approvals ----
-async function loadPendingHodRegs(){
-  return api("/admin/hod-registrations");
-}
-async function approveHodReg(id){
-  return api(`/admin/hod-registrations/${id}/approve`, { method:"POST" });
-}
-async function rejectHodReg(id){
-  return api(`/admin/hod-registrations/${id}/reject`, { method:"POST" });
-}
-
-// ---- Admin: Bulk sub-routes (grams) ----
-async function bulkUpsertSubs(routeId, lines){
-  return api(`/admin/routes/${routeId}/subroutes/bulk`, { method:"POST", body: JSON.stringify({ lines }) });
-}
