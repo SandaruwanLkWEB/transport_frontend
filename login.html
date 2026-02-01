@@ -11,7 +11,7 @@
 </div></div>
 <div class="container">
 <h1 class="h1">ඇතුල්වීම</h1>
-<div class="grid">
+<div class="grid two">
   <div class="card soft">
     <h2 class="h2">ඔබගේ ගිණුමට ඇතුල් වන්න</h2>
     <div id="msg" class="alert error hidden"></div>
@@ -23,10 +23,10 @@
       <div class="btnrow">
         <button class="btn btn-primary" id="btnLogin">ඇතුල් වන්න</button>
       </div>
-</span>
+      
     </div>
   </div>
-  </div>
+</div>
 </div>
 <script>
 document.getElementById("btnLogin").onclick = async ()=>{
@@ -37,14 +37,24 @@ document.getElementById("btnLogin").onclick = async ()=>{
   try{
     const d = await api("/auth/login", { method:"POST", body: JSON.stringify({ email, password }) });
     setToken(d.token);
-    const me = await loadMe();
-    const role = me.me && me.me.role;
+    // Prefer role from login response (avoids immediate /me call & logout loops)
+    const role = d.role;
     if(role==="ADMIN") location.href="admin.html";
     else if(role==="HOD") location.href="hod.html";
     else if(role==="TA") location.href="ta.html";
     else if(role==="HR") location.href="hr.html";
     else if(role==="EMP") location.href="emp.html";
-    else location.href="login.html";
+    else {
+      // Fallback if backend didn't return role
+      const me = await loadMe();
+      const r = me.me && me.me.role;
+      if(r==="ADMIN") location.href="admin.html";
+      else if(r==="HOD") location.href="hod.html";
+      else if(r==="TA") location.href="ta.html";
+      else if(r==="HR") location.href="hr.html";
+      else if(r==="EMP") location.href="emp.html";
+      else throw new Error("API සම්බන්ධතා/භූමිකා ගැටලුවක්. API_BASE_URL පරීක්ෂා කරන්න.");
+    }
   }catch(e){
     msg.textContent = e.message || "අසමත් විය";
     msg.classList.remove("hidden");
