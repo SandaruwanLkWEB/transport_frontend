@@ -9,13 +9,15 @@
   <script src="assets/app.js"></script>
 </head>
 <body>
-<header>
-  <h1>ප්‍රවාහන අධිකාරිය</h1>
-  <div style="display:flex; gap:8px; align-items:center;">
-    <a href="index.html">මුල් පිටුව</a>
-    <button class="btn secondary small" onclick="logout()">ඉවත් වන්න</button>
-  </div>
-</header>
+<div class="topbar"><div class="inner">
+<div class="brand"><span class="dot"></span> ප්‍රවාහන පද්ධතිය</div>
+<div class="nav">
+<a class="btn btn-ghost" href="index.html">මුල් පිටුව</a>
+<button class="btn btn-primary" onclick="logout()">නිවන්න</button>
+</div></div></div>
+<div class="container">
+<h1 class="h1">ප්‍රවාහන අධිකාරිය පුවරුව</h1>
+
 
 <div class="container">
   <div class="card" id="meBox"></div>
@@ -23,8 +25,8 @@
   <div class="card">
     <div class="tabs">
       <button class="btn active" id="tabවාහන" onclick="setTab('vehicles')">වාහන</button>
-      <button class="btn" id="tabඅනුයුක්තිකරණ" onclick="setTab('assign')">අනුයුක්තිකරණ</button>
-      <button class="btn" id="tabවාර්තා" onclick="setTab('reports')">වාර්තා</button>
+      <button class="btn" id="tabAssignments" onclick="setTab('assign')">Assignments</button>
+      <button class="btn" id="tabReports" onclick="setTab('reports')">Reports</button>
     </div>
   </div>
 
@@ -34,7 +36,7 @@
 
     <div class="row">
       <div>
-        <label>වාහන අංකය (Fleet) (UNIQUE)</label>
+        <label>Vehicle No (UNIQUE)</label>
         <input id="vNo" placeholder="NC-1234" />
       </div>
       <div>
@@ -49,11 +51,11 @@
 
     <div class="row">
       <div>
-        <label>ධාරිතාව</label>
+        <label>Capacity</label>
         <input id="vCap" type="number" min="1" placeholder="12" />
       </div>
       <div>
-        <label>හිමියාගේ නම</label>
+        <label>Owner Name</label>
         <input id="vOwner" placeholder="Owner name" />
       </div>
     </div>
@@ -66,7 +68,7 @@
     <div style="display:flex; gap:8px; flex-wrap:wrap;">
       <button class="btn" onclick="saveVehicle()">Save Vehicle</button>
       <button class="btn ghost" onclick="clearVehicleForm()">Clear</button>
-      <button class="btn ghost" onclick="loadවාහන()">යාවත්කාලීන කරන්න</button>
+      <button class="btn ghost" onclick="loadවාහන()">Refresh</button>
     </div>
 
     <div class="hr"></div>
@@ -82,13 +84,13 @@
     <div id="vehList"></div>
   </div>
 
-  <!-- අනුයුක්තිකරණ -->
+  <!-- Assignments -->
   <div class="card" id="pane_assign" style="display:none;">
     <h2 style="margin:0 0 10px;">Assign වාහන to රූට්</h2>
 
     <div class="row">
       <div>
-        <label>ඉල්ලීම තෝරන්න (Admin අනුමත කරන්නd)</label>
+        <label>Select Request (Admin අනුමත කරන්නd)</label>
         <select id="reqSelect" onchange="selectRequest()"></select>
         <div class="small">Request එක select කරලා groups load වෙනවා. Group එකට වාහන 1ක් හෝ වැඩි ගණනක් දාන්න පුළුවන්.</div>
       </div>
@@ -96,7 +98,7 @@
         <label>Quick Actions</label>
         <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
           <button class="btn ghost" onclick="reloadCurrent()">Reload</button>
-          <button class="btn" onclick="submitTA()">Submit TA (ධාරිතාව Check)</button>
+          <button class="btn" onclick="submitTA()">Submit TA (Capacity Check)</button>
         </div>
       </div>
     </div>
@@ -106,10 +108,10 @@
     <div id="groupsBox" class="small">Select a request...</div>
   </div>
 
-  <!-- වාර්තා -->
+  <!-- Reports -->
   <div class="card" id="pane_reports" style="display:none;">
-    <h2 style="margin:0 0 10px;">බාගත කරන්න වාර්තා</h2>
-    <div class="small">වාර්තා download කරන්නේ HR Final Approval පස්සේම. Request එක select කරලා download කරන්න.</div>
+    <h2 style="margin:0 0 10px;">බාගත කරන්න Reports</h2>
+    <div class="small">Reports download කරන්නේ HR Final Approval පස්සේම. Request එක select කරලා download කරන්න.</div>
     <div class="row">
       <div>
         <label>Request ID</label>
@@ -128,6 +130,8 @@
 
 </div>
 
+
+</div>
 <script>
 let ME=null;
 let VEH=[];
@@ -179,16 +183,16 @@ function selectedRouteIds(){
   return qsa(".routeChk:checked").map(x => parseInt(x.value,10));
 }
 
-async function loadවාහන(){
+async function loadVehicles(){
   const d = await api("/ta/vehicles");
   VEH = d.vehicles || [];
-  renderවාහන();
+  renderVehicles();
 }
 
-function renderවාහන(){
+function renderVehicles(){
   const q = (qs("vehSearch").value||"").toLowerCase();
   const list = VEH.filter(v => (v.vehicle_no||"").toLowerCase().includes(q));
-  let html = "<div class="table-wrap"><table><tr><th>No</th><th>Type</th><th>Cap</th><th>Owner</th><th>Routes</th><th>ක්‍රියාව</th></tr>";
+  let html = "<div class="table-wrap"><table><tr><th>No</th><th>Type</th><th>Cap</th><th>Owner</th><th>Routes</th><th>Action</th></tr>";
   for(const v of list){
     const rnames = (v.route_ids||[]).map(id => routeName(id)).filter(Boolean).join(", ");
     html += `<tr>
@@ -237,7 +241,7 @@ async function saveVehicle(){
     };
     if(!body.vehicle_no) throw new Error("Vehicle number required");
     if(!body.owner_name) throw new Error("Owner name required");
-    if(!body.capacity || body.capacity<1) throw new Error("ධාරිතාව required");
+    if(!body.capacity || body.capacity<1) throw new Error("Capacity required");
 
     if(EDIT_VEH_ID){
       await api(`/ta/vehicles/${EDIT_VEH_ID}`, {method:"PATCH", body: JSON.stringify(body)});
@@ -246,18 +250,18 @@ async function saveVehicle(){
       await api(`/ta/vehicles`, {method:"POST", body: JSON.stringify(body)});
       toast("Vehicle created");
     }
-    await loadවාහන();
+    await loadVehicles();
     clearVehicleForm();
   }catch(e){ toast(e.message); }
 }
 
-async function loadඉල්ලීම්(){
+async function loadRequests(){
   const d = await api("/ta/requests/approved");
   REQS = d.requests || [];
   // build select
   let html = '<option value="">-- Select --</option>';
   for(const r of REQS){
-    html += `<option value="${r.id}">#${r.id} | ${fmtDate(r.request_date)} ${fmtTime(r.request_time)} | ${r.department_name} | ${r.status}</option>`;
+    html += `<option value="${r.id}">#${r.id} | ${r.request_date} ${r.request_time} | ${r.department_name} | ${r.status}</option>`;
   }
   qs("reqSelect").innerHTML = html;
 }
@@ -273,7 +277,7 @@ async function reloadCurrent(){
   try{
     if(!CURRENT_REQ) return;
     const req = REQS.find(x=>x.id===CURRENT_REQ);
-    qs("reqMeta").innerHTML = req ? `Selected: <b>#${req.id}</b> | ${req.request_date} ${req.request_time} | Dept: ${req.department_name} | තත්ත්වය: ${statusBadge(req.status)}` : "";
+    qs("reqMeta").innerHTML = req ? `Selected: <b>#${req.id}</b> | ${req.request_date} ${req.request_time} | Dept: ${req.department_name} | Status: ${statusBadge(req.status)}` : "";
     const g = await api(`/ta/requests/${CURRENT_REQ}/groups`);
     GROUPS = g.groups || [];
     const a = await api(`/ta/requests/${CURRENT_REQ}/assignments`);
@@ -308,7 +312,7 @@ function assignmentsForGroup(route_id, sub_route_id){
   );
 }
 
-function capacityForඅනුයුක්තිකරණ(as){
+function capacityForAssignments(as){
   let sum = 0;
   for(const a of as){
     const v = VEH.find(x=>String(x.id)===String(a.vehicle_id));
@@ -326,7 +330,7 @@ function renderGroups(){
     const routeText = g.route_id ? routeName(g.route_id) : "(No Route)";
     const subText = g.sub_route_id ? subName(g.sub_route_id) : "";
     const current = assignmentsForGroup(g.route_id, g.sub_route_id).map(x => ({...x}));
-    const cap = capacityForඅනුයුක්තිකරණ(current);
+    const cap = capacityForAssignments(current);
     const remain = g.headcount - cap;
 
     const badge = remain <= 0 ? "<span class='badge good'>ධාරිතාව හරි</span>" : "<span class='badge bad'>ධාරිතාව අඩුයි</span>";
@@ -441,12 +445,12 @@ async function submitTA(){
     if(!CURRENT_REQ) throw new Error("පළමුව ඉල්ලීමක් තෝරන්න");
     await api(`/ta/requests/${CURRENT_REQ}/submit`, {method:"POST"});
     toast("TA වෙතින් යොමු කළා");
-    await loadඉල්ලීම්();
+    await loadRequests();
     await reloadCurrent();
   }catch(e){ toast(e.message); }
 }
 
-// වාර්තා
+// Reports
 function downloadRouteReport(){
   const id = qs("repReqId").value.trim();
   if(!id){ toast("Enter request id"); return; }
@@ -463,9 +467,9 @@ function downloadVehicleReport(){
     await guard();
     await loadRouteTree();
     renderRouteChecks([]);
-    await loadවාහන();
-    await loadඉල්ලීම්();
-  }catch(e){ toast(e.message); if(!maybeLogoutOnAuth(e)){} }
+    await loadVehicles();
+    await loadRequests();
+  }catch(e){ toast(e.message); logout(); }
 })();
 </script>
 </body>
