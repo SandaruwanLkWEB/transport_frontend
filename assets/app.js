@@ -1,130 +1,149 @@
-// --- STATE & AUTH ---
-function setToken(token) { localStorage.setItem("token", token); }
 function getToken() { return localStorage.getItem("token"); }
-function clearToken() { localStorage.removeItem("token"); window.location.href = "login.html"; }
+function setToken(t) { localStorage.setItem("token", t); }
+function clearToken() { localStorage.removeItem("token"); }
 
-// --- API WRAPPER ---
+function qs(id){ return document.getElementById(id); }
+function qsa(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function ensureToast(){
+  if (document.getElementById("toast")) return;
+  const div = document.createElement("div");
+  div.id = "toast";
+  document.body.appendChild(div);
+}
+function toast(msg){
+  ensureToast();
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>{ t.style.display="none"; }, 2600);
+}
+
 async function api(path, options = {}) {
-    const headers = options.headers || {};
-    const token = getToken();
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-    headers["Content-Type"] = "application/json";
+  const headers = Object.assign({ "Content-Type": "application/json" }, options.headers || {});
+  const token = getToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    try {
-        const res = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
-        const text = await res.text();
-        const data = text ? JSON.parse(text) : {}; // Handle empty responses
+  let res;
+  try{
+    res = await fetch(`${API_BASE_URL}${path}`, Object.assign({}, options, { headers }));
+  }catch(e){
+    // Network/CORS errors are common on first setup — don't auto logout, just show a readable message.
+    throw new Error("සර්වර් සම්බන්ධතාවය අසාර්ථකයි (Network/CORS). Railway URL සහ ALLOWED_ORIGINS පරීක්ෂා කරන්න.");
+  }
+  const text = await res.text();
+  let data = {};
+  try { data = text ? JSON.parse(text) : {}; } catch (e) { data = { raw: text }; }
 
-        if (!res.ok) {
-            if (res.status === 401 || res.status === 403) {
-                // Token Expired or Invalid
-                // clearToken(); // Optional: Auto logout
-            }
-            throw new Error(data.error || "Server Error");
-        }
-        return data;
-    } catch (e) {
-        showToast(e.message, "error");
-        throw e;
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+// ---- Formatting helpers ----
+function fmtDate(v){
+  if(!v) return "";
+  const s = String(v);
+  // if already date-only
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // ISO string like 2026-01-31T00:00:00.000Z
+  if(s.includes("T")) return s.split("T")[0];
+  // fallback
+  try{
+    const d = new Date(s);
+    if(!isNaN(d.getTime())) return d.toISOString().slice(0,10);
+  }catch(e){}
+  return s;
+}
+
+function fmtTime(v){
+  if(!v) return "";
+  const s = String(v);
+  // 21:30:00 -> 21:30
+  const m = s.match(/^(\d{2}):(\d{2})/);
+  if(m) return `${m[1]}:${m[2]}`;
+  return s;
+}
+
+function routeLabelById(route_id){
+  if(!ROUTE_TREE || !route_id) return route_id ? String(route_id) : "";
+  const r = ROUTE_TREE.routes.find(x => String(x.id) === String(route_id));
+  if(!r) return String(route_id);
+  const no = r.route_no != null ? String(r.route_no).trim() : "";
+  const name = r.route_name != null ? String(r.route_name).trim() : "";
+  return no && name ? `${no} - ${name}` : (name || no || String(route_id));
+}
+
+function gramayaLabelById(sub_route_id){
+  if(!ROUTE_TREE || !sub_route_id) return sub_route_id ? String(sub_route_id) : "";
+  const s = ROUTE_TREE.sub_routes.find(x => String(x.id) === String(sub_route_id));
+  if(!s) return String(sub_route_id);
+  return s.sub_name || String(sub_route_id);
+}
+
+async function loadMe() { return api("/me"); }
+
+async function guardRole(role){
+  const me = await loadMe();
+  if(!me.me || me.me.role !== role){ location.href="login.html"; return null; }
+  return me.me;
+}
+
+function logout(){
+  clearToken();
+  location.href = "login.html";
+}
+
+// ---- Lookups (routes/subroutes) ----
+let ROUTE_TREE = null;
+async function loadRouteTree(){
+  if(ROUTE_TREE) return ROUTE_TREE;
+  try{
+    const cached = localStorage.getItem("routesTree");
+    if(cached){
+      const obj = JSON.parse(cached);
+      // cache up to 6 hours
+      if(obj && obj.at && (Date.now() - obj.at) < (6*60*60*1000) && obj.data){
+        ROUTE_TREE = obj.data;
+        return ROUTE_TREE;
+      }
     }
+  }catch(e){}
+
+  const d = await api("/lookup/routes-tree");
+  ROUTE_TREE = { routes: d.routes || [], sub_routes: d.sub_routes || [] };
+  localStorage.setItem("routesTree", JSON.stringify({ at: Date.now(), data: ROUTE_TREE }));
+  return ROUTE_TREE;
 }
 
-// --- UI HELPERS ---
-function qs(selector) { return document.querySelector(selector); }
-function qsa(selector) { return document.querySelectorAll(selector); }
-
-function showToast(msg, type = "info") {
-    let container = document.getElementById("toast-container");
-    if (!container) {
-        container = document.createElement("div");
-        container.id = "toast-container";
-        document.body.appendChild(container);
-    }
-    const toast = document.createElement("div");
-    toast.className = `toast ${type}`;
-    toast.innerText = msg;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+function subRoutesFor(route_id){
+  if(!ROUTE_TREE) return [];
+  return ROUTE_TREE.sub_routes.filter(s => String(s.route_id) === String(route_id));
 }
 
-// --- LAYOUT & NAVIGATION (System එක professional කරන්නේ මේකෙන්) ---
-function renderLayout(userRole) {
-    const navItems = {
-        "ADMIN": [
-            { label: "Dashboard", link: "admin.html", icon: "🏠" },
-            { label: "Departments", link: "#", onClick: "setTab('master')" }, // Example of calling tab function
-        ],
-        "HOD": [
-            { label: "Dashboard", link: "hod.html", icon: "📊" },
-        ],
-        "TA": [
-             { label: "Vehicles", link: "ta.html", icon: "🚐" },
-        ],
-        "HR": [
-             { label: "Approvals", link: "hr.html", icon: "✅" },
-        ],
-        "EMP": [
-             { label: "My Transport", link: "emp.html", icon: "📍" },
-        ]
-    };
-
-    // Common items if needed
-    const roleItems = navItems[userRole] || [];
-
-    const sidebarHTML = `
-        <div class="sidebar">
-            <div class="brand">🚀 TransportSys</div>
-            <nav>
-                ${roleItems.map(item => `
-                    <a href="${item.link}" class="nav-item" ${item.onClick ? `onclick="${item.onClick}"` : ''}>
-                        ${item.icon || '•'} ${item.label}
-                    </a>
-                `).join('')}
-                <a href="#" class="nav-item logout" onclick="logout()">🚪 පිටවන්න</a>
-            </nav>
-             <div style="margin-top:auto; padding-top:20px; font-size:0.8rem; color:#9ca3af;">
-                Logged as: <b>${userRole}</b>
-            </div>
-        </div>
-        <div class="main-content">
-            <header class="flex-between" style="margin-bottom:20px;">
-                <h2 id="page-title">Dashboard</h2>
-                <div class="user-info">
-                   </div>
-            </header>
-            <div id="app-content">
-                </div>
-        </div>
-    `;
-
-    // Note: Since we are using multi-page HTML files, we only inject the Sidebar into a placeholder
-    // Or we stick to the HTML structure where Sidebar is defined.
-    // BETTER APPROACH FOR YOU: Use the HTML structure below in every file.
+function optionHTML(list, valueKey, labelKey, selectedValue, includeEmpty=true, emptyLabel="-- තෝරන්න --"){
+  let html = includeEmpty ? `<option value="">${emptyLabel}</option>` : "";
+  for(const x of list){
+    const v = x[valueKey];
+    const label = x[labelKey];
+    const sel = String(v) === String(selectedValue) ? "selected" : "";
+    html += `<option value="${v}" ${sel}>${label}</option>`;
+  }
+  return html;
 }
 
-function logout() {
-    clearToken();
+function statusBadge(status){
+  const map = {
+    "DRAFT": ["කෙටුම්පත","warn"],
+    "SUBMITTED": ["යොමු කර ඇත","warn"],
+    "ADMIN_APPROVED": ["පරිපාලක අනුමත","good"],
+    "TA_ASSIGNED_PENDING_HR": ["HR ඔවරයිඩ් අනුමැතිය බලාපොරොත්තු","warn"],
+    "TA_ASSIGNED": ["වාහන අනුයුක්ත කර ඇත","good"],
+    "TA_FIX_REQUIRED": ["TA විසින් සකස් කළ යුතුයි","warn"],
+    "HR_FINAL_APPROVED": ["අවසාන අනුමත","good"],
+    "REJECTED": ["ප්‍රතික්ෂේප","bad"]
+  };
+  const v = map[status] || [status, "badge"];
+  return `<span class="badge ${v[1]}">${v[0]}</span>`;
 }
 
-async function checkAuth(requiredRole) {
-    const token = getToken();
-    if (!token) { window.location.href = "login.html"; return null; }
-    
-    // Ideally we verify with /me, but for speed we can decode or rely on stored role
-    // Let's call /me to be safe
-    try {
-        const d = await api("/me");
-        if (requiredRole && d.me.role !== requiredRole) {
-            window.location.href = "index.html"; // Redirect to role dispatcher
-            return null;
-        }
-        return d.me;
-    } catch (e) {
-        clearToken();
-        return null;
-    }
-}
-
-// --- UTILS ---
-function fmtDate(iso) { return iso ? iso.split("T")[0] : ""; }
-function fmtTime(timeStr) { return timeStr ? timeStr.slice(0, 5) : ""; }
