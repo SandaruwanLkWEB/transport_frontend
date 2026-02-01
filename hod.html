@@ -208,7 +208,7 @@ async function guard(){
 async function loadPending(){
   const d = await api("/hod/registrations/pending");
   if(d.pending.length===0){ qs("pendingBox").innerHTML = "<span class='badge good'>No pending</span>"; return; }
-  let html = "<div class='table-wrap'><table><thead><tr><th>ID</th><th>Email</th><th>Created</th><th>Action</th></tr></thead><tbody>";
+  let html = "<table><tr><th>ID</th><th>Email</th><th>Created</th><th>Action</th></tr>";
   for(const p of d.pending){
     html += `<tr>
       <td>${p.id}</td>
@@ -217,7 +217,7 @@ async function loadPending(){
       <td><button class='btn small' onclick='approveReg(${p.id})'>Approve</button></td>
     </tr>`;
   }
-  html += "</tbody></table></div>";
+  html += "</table>";
   qs("pendingBox").innerHTML = html;
 }
 
@@ -239,7 +239,7 @@ async function loadEmployees(){
 function renderEmployees(){
   const q = (qs("empSearch").value||"").toLowerCase();
   const list = EMP.filter(e => (e.full_name||"").toLowerCase().includes(q) || (e.emp_no||"").toLowerCase().includes(q));
-  let html = "<div class='table-wrap'><table><thead><tr><th>Name</th><th>Emp No</th><th>Default Route</th><th>Default Sub</th><th>Active</th><th>Action</th></tr></thead><tbody>";
+  let html = "<table><tr><th>Name</th><th>Emp No</th><th>Default Route</th><th>Default Sub</th><th>Active</th><th>Action</th></tr>";
   for(const e of list){
     const routeOptions = optionHTML(
       ROUTE_TREE.routes.map(r=>({id:r.id, label:`${r.route_no} - ${r.route_name}`})),
@@ -267,7 +267,7 @@ function renderEmployees(){
       </td>
     </tr>`;
   }
-  html += "</tbody></table></div>";
+  html += "</table>";
   qs("empList").innerHTML = html;
 }
 
@@ -313,7 +313,7 @@ async function addEmployee(){
 function renderSelectEmployees(){
   const q = (qs("selSearch").value||"").toLowerCase();
   const list = EMP.filter(e => e.is_active).filter(e => (e.full_name||"").toLowerCase().includes(q) || (e.emp_no||"").toLowerCase().includes(q));
-  let html = "<div class='table-wrap'><table><thead><tr><th></th><th>Name</th><th>Emp No</th><th>Route</th><th>Sub</th></tr></thead><tbody>";
+  let html = "<table><tr><th></th><th>Name</th><th>Emp No</th><th>Route</th><th>Sub</th></tr>";
   for(const e of list){
     const routeOptions = optionHTML(
       ROUTE_TREE.routes.map(r=>({id:r.id, label:`${r.route_no} - ${r.route_name}`})),
@@ -329,7 +329,7 @@ function renderSelectEmployees(){
       <td><select id="ss_${e.id}">${subOptions}</select></td>
     </tr>`;
   }
-  html += "</tbody></table></div>";
+  html += "</table>";
   qs("selectEmployeesBox").innerHTML = html;
 }
 
@@ -393,7 +393,7 @@ async function loadRequests(){
 
 function renderRequests(){
   if(REQS.length===0){ qs("reqList").innerHTML = "<span class='badge warn'>No requests</span>"; return; }
-  let html = "<div class='table-wrap'><table><thead><tr><th>ID</th><th>Date</th><th>Time</th><th>Status</th><th>Action</th></tr></thead><tbody>";
+  let html = "<table><tr><th>ID</th><th>Date</th><th>Time</th><th>Status</th><th>Action</th></tr>";
   for(const r of REQS){
     html += `<tr>
       <td>${r.id}</td>
@@ -405,7 +405,7 @@ function renderRequests(){
       </td>
     </tr>`;
   }
-  html += "</tbody></table></div>";
+  html += "</table>";
   qs("reqList").innerHTML = html;
 }
 
@@ -428,7 +428,7 @@ async function openEditor(id){
 }
 
 function renderReqEmployeesTable(items, readonly){
-  let html = "<div class='table-wrap'><table><thead><tr><th>Name</th><th>Emp No</th><th>Effective Route</th><th>Effective Sub</th><th>Remove</th><th>Persist</th></tr></thead><tbody>";
+  let html = "<table><tr><th>Name</th><th>Emp No</th><th>Effective Route</th><th>Effective Sub</th><th>Remove</th><th>Persist</th></tr>";
   for(const it of items){
     const routeOptions = optionHTML(
       ROUTE_TREE.routes.map(r=>({id:r.id, label:`${r.route_no} - ${r.route_name}`})),
@@ -445,7 +445,7 @@ function renderReqEmployeesTable(items, readonly){
       <td>${readonly ? "" : `<input type="checkbox" id="rp_${it.employee_id}">`}</td>
     </tr>`;
   }
-  html += "</tbody></table></div>";
+  html += "</table>";
   return html;
 }
 

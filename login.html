@@ -11,7 +11,7 @@
 </div></div>
 <div class="container">
 <h1 class="h1">ඇතුල්වීම</h1>
-<div class="grid two">
+<div class="grid">
   <div class="card soft">
     <h2 class="h2">ඔබගේ ගිණුමට ඇතුල් වන්න</h2>
     <div id="msg" class="alert error hidden"></div>
@@ -22,21 +22,10 @@
     <div class="toolbar">
       <div class="btnrow">
         <button class="btn btn-primary" id="btnLogin">ඇතුල් වන්න</button>
-      </div>
-    </div>
+      </div></div>
   </div>
-  <div class="card">
-    <h2 class="h2">සටහන</h2>
-    <p class="p-muted">ඔබ ඇතුල් වූ පසු භූමිකාව අනුව (ADMIN/HOD/TA/HR/EMP) ස්වයංක්‍රීයව ඩැශ්බෝර්ඩයට යොමු වේ.</p>
-    <hr/>
-    <div class="badge brand">Modern Enterprise UI</div>
-    <div class="badge brand">සිංහල</div>
-    <div class="badge brand">A4 වාර්තා</div>
-  </div>
-</div>
 </div>
 <script>
-// Intentionally hide backend URL in UI
 document.getElementById("btnLogin").onclick = async ()=>{
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;

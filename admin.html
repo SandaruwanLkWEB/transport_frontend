@@ -200,7 +200,7 @@ function renderRequests(){
 
   if(list.length===0){ qs("reqList").innerHTML = "<span class='badge warn'>No matching requests</span>"; return; }
 
-  let html = "<div class='table-wrap'><table><thead><tr><th>ID</th><th>Date</th><th>Time</th><th>Department</th><th>Status</th><th>Action</th></tr></thead><tbody>";
+  let html = "<table><tr><th>ID</th><th>Date</th><th>Time</th><th>Department</th><th>Status</th><th>Action</th></tr>";
   for(const r of list){
     const canApprove = r.status==="SUBMITTED";
     html += `<tr>
@@ -212,7 +212,7 @@ function renderRequests(){
       <td><button class="btn small" onclick="openDetail(${r.id})">View</button></td>
     </tr>`;
   }
-  html += "</tbody></table></div>";
+  html += "</table>";
   qs("reqList").innerHTML = html;
 }
 
@@ -224,7 +224,7 @@ async function openDetail(id){
     qs("dReqId").textContent = id;
     qs("dMeta").innerHTML = `Dept: <b>${d.request.department_name}</b> | Date: <b>${d.request.request_date}</b> | Time: <b>${d.request.request_time}</b> | Status: ${statusBadge(d.request.status)}`;
 
-    let html = "<div class='table-wrap'><table><thead><tr><th>Employee</th><th>Emp No</th><th>Route</th><th>Sub</th></tr></thead><tbody>";
+    let html = "<table><tr><th>Employee</th><th>Emp No</th><th>Route</th><th>Sub</th></tr>";
     for(const e of d.employees){
       html += `<tr>
         <td>${e.full_name}</td>
@@ -233,7 +233,7 @@ async function openDetail(id){
         <td>${e.effective_sub_route_id ?? ""}</td>
       </tr>`;
     }
-    html += "</tbody></table></div>";
+    html += "</table>";
     qs("dEmployees").innerHTML = html;
 
     qs("btnApprove").disabled = d.request.status !== "SUBMITTED";
@@ -264,7 +264,7 @@ async function approveReq(){
 async function loadDepartments(){
   const d = await api("/admin/departments");
   DEPS = d.departments || [];
-  let html = "<div class='table-wrap'><table><thead><tr><th>Name</th><th>Action</th></tr></thead><tbody>";
+  let html = "<table><tr><th>Name</th><th>Action</th></tr>";
   for(const dep of DEPS){
     html += `<tr>
       <td><input id="dep_${dep.id}" value="${(dep.name||"").replace(/"/g,'&quot;')}" /></td>
@@ -274,7 +274,7 @@ async function loadDepartments(){
       </td>
     </tr>`;
   }
-  html += "</tbody></table></div>";
+  html += "</table>";
   qs("depList").innerHTML = html;
 
   // refresh dropdown for subroutes too
@@ -311,7 +311,7 @@ async function deleteDepartment(id){
 async function loadRoutes(){
   const d = await api("/admin/routes");
   ROUTES = d.routes || [];
-  let html = "<div class='table-wrap'><table><thead><tr><th>No</th><th>Name</th><th>Action</th></tr></thead><tbody>";
+  let html = "<table><tr><th>No</th><th>Name</th><th>Action</th></tr>";
   for(const r of ROUTES){
     html += `<tr>
       <td><input id="rno_${r.id}" value="${(r.route_no||"").replace(/"/g,'&quot;')}" /></td>
@@ -322,7 +322,7 @@ async function loadRoutes(){
       </td>
     </tr>`;
   }
-  html += "</tbody></table></div>";
+  html += "</table>";
   qs("routeList").innerHTML = html;
 
   // dropdown for subroutes
@@ -371,7 +371,7 @@ async function loadSubRoutes(){
     if(!routeId){ qs("subList").innerHTML = "<span class='badge warn'>Select route</span>"; return; }
     const d = await api(`/admin/routes/${routeId}/subroutes`);
     SUBS = d.sub_routes || [];
-    let html = "<div class='table-wrap'><table><thead><tr><th>Sub Name</th><th>Action</th></tr></thead><tbody>";
+    let html = "<table><tr><th>Sub Name</th><th>Action</th></tr>";
     for(const s of SUBS){
       html += `<tr>
         <td><input id="sname_${s.id}" value="${(s.sub_name||"").replace(/"/g,'&quot;')}" /></td>
@@ -381,7 +381,7 @@ async function loadSubRoutes(){
         </td>
       </tr>`;
     }
-    html += "</tbody></table></div>";
+    html += "</table>";
     qs("subList").innerHTML = html;
     localStorage.removeItem("routesTree");
   }catch(e){ toast(e.message); }

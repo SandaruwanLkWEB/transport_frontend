@@ -82,7 +82,7 @@ async function loadTARequests(){
 
 function render(){
   if(LIST.length===0){ qs("listBox").innerHTML = "<span class='badge good'>බලාපොරොත්තු වූ ඉල්ලීම් නැත</span>"; return; }
-  let html = "<div class='table-wrap'><table><thead><tr><th>ID</th><th>දිනය</th><th>වේලාව</th><th>දෙපාර්තමේන්තුව</th><th>තත්ත්වය</th><th>ක්‍රියාව</th></tr></thead><tbody>";
+  let html = "<table><tr><th>ID</th><th>දිනය</th><th>වේලාව</th><th>දෙපාර්තමේන්තුව</th><th>තත්ත්වය</th><th>ක්‍රියාව</th></tr>";
   for(const r of LIST){
     html += `<tr>
       <td>${r.id}</td>
@@ -100,7 +100,7 @@ function render(){
       </td>
     </tr>`;
   }
-  html += "</tbody></table></div>";
+  html += "</table>";
   qs("listBox").innerHTML = html;
 }
 

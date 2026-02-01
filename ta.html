@@ -188,7 +188,7 @@ async function loadVehicles(){
 function renderVehicles(){
   const q = (qs("vehSearch").value||"").toLowerCase();
   const list = VEH.filter(v => (v.vehicle_no||"").toLowerCase().includes(q));
-  let html = "<div class='table-wrap'><table><thead><tr><th>No</th><th>Type</th><th>Cap</th><th>Owner</th><th>Routes</th><th>Action</th></tr></thead><tbody>";
+  let html = "<table><tr><th>No</th><th>Type</th><th>Cap</th><th>Owner</th><th>Routes</th><th>Action</th></tr>";
   for(const v of list){
     const rnames = (v.route_ids||[]).map(id => routeName(id)).filter(Boolean).join(", ");
     html += `<tr>
@@ -200,7 +200,7 @@ function renderVehicles(){
       <td><button class="btn small" onclick="editVehicle(${v.id})">Edit</button></td>
     </tr>`;
   }
-  html += "</tbody></table></div>";
+  html += "</table>";
   qs("vehList").innerHTML = html;
 }
 
