@@ -25,60 +25,26 @@ async function api(path, options = {}) {
   const token = getToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  let res;
+  const base = (API_BASE_URL || "").replace(/\/$/, "");
+  let res, text, data;
   try{
-    res = await fetch(`${API_BASE_URL}${path}`, Object.assign({}, options, { headers }));
+    res = await fetch(`${base}${path}`, Object.assign({}, options, { headers }));
+    text = await res.text();
+    try { data = text ? JSON.parse(text) : {}; } catch (e) { data = { raw: text }; }
   }catch(e){
-    // Network/CORS errors are common on first setup — don't auto logout, just show a readable message.
-    throw new Error("සර්වර් සම්බන්ධතාවය අසාර්ථකයි (Network/CORS). Railway URL සහ ALLOWED_ORIGINS පරීක්ෂා කරන්න.");
+    // Network / CORS / DNS issues
+    throw new Error("ජාල/සම්බන්ධතා ගැටලුවක්. කරුණාකර නැවත උත්සාහ කරන්න.");
   }
-  const text = await res.text();
-  let data = {};
-  try { data = text ? JSON.parse(text) : {}; } catch (e) { data = { raw: text }; }
 
-  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  // Only logout on real auth errors
+  if (res.status === 401 || res.status === 403){
+    clearToken();
+    location.href = "login.html";
+    throw new Error("නැවත ඇතුල් වන්න.");
+  }
+
+  if (!res.ok) throw new Error(data.error || data.message || `HTTP ${res.status}`);
   return data;
-}
-
-// ---- Formatting helpers ----
-function fmtDate(v){
-  if(!v) return "";
-  const s = String(v);
-  // if already date-only
-  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  // ISO string like 2026-01-31T00:00:00.000Z
-  if(s.includes("T")) return s.split("T")[0];
-  // fallback
-  try{
-    const d = new Date(s);
-    if(!isNaN(d.getTime())) return d.toISOString().slice(0,10);
-  }catch(e){}
-  return s;
-}
-
-function fmtTime(v){
-  if(!v) return "";
-  const s = String(v);
-  // 21:30:00 -> 21:30
-  const m = s.match(/^(\d{2}):(\d{2})/);
-  if(m) return `${m[1]}:${m[2]}`;
-  return s;
-}
-
-function routeLabelById(route_id){
-  if(!ROUTE_TREE || !route_id) return route_id ? String(route_id) : "";
-  const r = ROUTE_TREE.routes.find(x => String(x.id) === String(route_id));
-  if(!r) return String(route_id);
-  const no = r.route_no != null ? String(r.route_no).trim() : "";
-  const name = r.route_name != null ? String(r.route_name).trim() : "";
-  return no && name ? `${no} - ${name}` : (name || no || String(route_id));
-}
-
-function gramayaLabelById(sub_route_id){
-  if(!ROUTE_TREE || !sub_route_id) return sub_route_id ? String(sub_route_id) : "";
-  const s = ROUTE_TREE.sub_routes.find(x => String(x.id) === String(sub_route_id));
-  if(!s) return String(sub_route_id);
-  return s.sub_name || String(sub_route_id);
 }
 
 async function loadMe() { return api("/me"); }
@@ -147,3 +113,25 @@ function statusBadge(status){
   return `<span class="badge ${v[1]}">${v[0]}</span>`;
 }
 
+
+
+function fmtDate(s){ if(!s) return ''; if(typeof s==='string' && s.includes('T')) return s.split('T')[0]; return s; }
+function fmtTime(s){ if(!s) return ''; if(typeof s==='string' && s.length>=5) return s.slice(0,5); return s; }
+function routeLabel(r){ if(!r) return ''; const no=(r.route_no||'').trim(); const name=(r.route_name||'').trim(); return (no&&name)?(`${no} - ${name}`):(name||no||''); }
+
+
+// ---- Admin: HOD registration approvals ----
+async function loadPendingHodRegs(){
+  return api("/admin/hod-registrations");
+}
+async function approveHodReg(id){
+  return api(`/admin/hod-registrations/${id}/approve`, { method:"POST" });
+}
+async function rejectHodReg(id){
+  return api(`/admin/hod-registrations/${id}/reject`, { method:"POST" });
+}
+
+// ---- Admin: Bulk sub-routes (grams) ----
+async function bulkUpsertSubs(routeId, lines){
+  return api(`/admin/routes/${routeId}/subroutes/bulk`, { method:"POST", body: JSON.stringify({ lines }) });
+}

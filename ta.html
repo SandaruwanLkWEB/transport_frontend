@@ -9,15 +9,13 @@
   <script src="assets/app.js"></script>
 </head>
 <body>
-<div class="topbar"><div class="inner">
-<div class="brand"><span class="dot"></span> ප්‍රවාහන පද්ධතිය</div>
-<div class="nav">
-<a class="btn btn-ghost" href="index.html">මුල් පිටුව</a>
-<button class="btn btn-primary" onclick="logout()">නිවන්න</button>
-</div></div></div>
-<div class="container">
-<h1 class="h1">ප්‍රවාහන අධිකාරිය පුවරුව</h1>
-
+<header>
+  <h1>ප්‍රවාහන අධිකාරිය</h1>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <a href="index.html">මුල් පිටුව</a>
+    <button class="btn secondary small" onclick="logout()">ඉවත් වන්න</button>
+  </div>
+</header>
 
 <div class="container">
   <div class="card" id="meBox"></div>
@@ -130,8 +128,6 @@
 
 </div>
 
-
-</div>
 <script>
 let ME=null;
 let VEH=[];
@@ -192,7 +188,7 @@ async function loadVehicles(){
 function renderVehicles(){
   const q = (qs("vehSearch").value||"").toLowerCase();
   const list = VEH.filter(v => (v.vehicle_no||"").toLowerCase().includes(q));
-  let html = "<div class="table-wrap"><table><tr><th>No</th><th>Type</th><th>Cap</th><th>Owner</th><th>Routes</th><th>Action</th></tr>";
+  let html = "<table><tr><th>No</th><th>Type</th><th>Cap</th><th>Owner</th><th>Routes</th><th>Action</th></tr>";
   for(const v of list){
     const rnames = (v.route_ids||[]).map(id => routeName(id)).filter(Boolean).join(", ");
     html += `<tr>
@@ -204,7 +200,7 @@ function renderVehicles(){
       <td><button class="btn small" onclick="editVehicle(${v.id})">Edit</button></td>
     </tr>`;
   }
-  html += "</table></div>";
+  html += "</table>";
   qs("vehList").innerHTML = html;
 }
 
@@ -346,10 +342,10 @@ function renderGroups(){
 
       <div class="hr"></div>
 
-      <div class="table-wrap"><table>
+      <table>
         <tr><th>වාහනය</th><th>රියදුරු නම</th><th>දුරකථනය</th><th>උපදෙස්</th><th>ඔවරයිඩ් (+)</th><th>හේතුව</th><th></th></tr>
         ${renderAssignRows(key, g.route_id, g.sub_route_id, current)}
-      </table></div>
+      </table>
 
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
         <button class="btn small" onclick="addAssignRow('${key}', ${g.route_id ?? "null"}, ${g.sub_route_id ?? "null"})">+ වාහනයක් එක් කරන්න</button>
