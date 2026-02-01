@@ -1,0 +1,181 @@
+/* 2026 Enterprise Theme (Light + Premium) - Sinhala Friendly (RED)
+   Static HTML + Vanilla JS
+*/
+:root{
+  --bg: #F7F8FA;
+  --surface: #FFFFFF;
+  --surface-2: #FCFCFD;
+  --text: #101828;
+  --muted: #475467;
+  --muted-2:#667085;
+  --border: #EAECF0;
+
+  --brand: #E11D48;
+  --brand-2:#BE123C;
+  --brand-soft:#FFF1F2;
+
+  --ok:#12B76A;
+  --warn:#F79009;
+  --bad:#F04438;
+
+  --shadow-sm: 0 1px 2px rgba(16,24,40,.06);
+  --shadow-md: 0 8px 24px rgba(16,24,40,.10);
+  --shadow-lg: 0 16px 48px rgba(16,24,40,.14);
+
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 22px;
+
+  --pad: 16px;
+  --pad-lg: 22px;
+
+  --focus: 0 0 0 4px rgba(225,29,72,.16);
+}
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  background: radial-gradient(1200px 700px at 20% -10%, rgba(225,29,72,.08), transparent 60%),
+              radial-gradient(1100px 700px at 80% 0%, rgba(16,24,40,.06), transparent 50%),
+              var(--bg);
+  color:var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+               "Noto Sans Sinhala", "Noto Sans", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  line-height:1.45;
+}
+a{ color:inherit; text-decoration:none; }
+a:hover{ text-decoration:underline; }
+.container{
+  width:min(1120px, 100%);
+  margin: 0 auto;
+  padding: 18px 14px 42px;
+}
+.topbar{
+  position:sticky; top:0; z-index:50;
+  backdrop-filter: blur(14px);
+  background: rgba(247,248,250,.72);
+  border-bottom:1px solid rgba(234,236,240,.75);
+}
+.topbar .inner{
+  display:flex; align-items:center; justify-content:space-between;
+  width:min(1120px, 100%);
+  margin:0 auto;
+  padding: 12px 14px;
+}
+.brand{
+  display:flex; align-items:center; gap:10px;
+  font-weight:900;
+  letter-spacing:.2px;
+}
+.brand .dot{
+  width:12px;height:12px;border-radius:999px;
+  background: linear-gradient(135deg,var(--brand),#FB7185);
+  box-shadow:0 10px 26px rgba(225,29,72,.28);
+}
+.nav{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.h1{ font-size: clamp(24px, 3.2vw, 34px); margin: 18px 0 10px; letter-spacing:-.3px; }
+.h2{ font-size: clamp(18px, 2.4vw, 22px); margin: 0 0 10px; letter-spacing:-.2px; }
+.p-muted{ color:var(--muted); margin:0; }
+.card{
+  background: var(--surface);
+  border:1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--pad-lg);
+}
+.card.soft{
+  background: linear-gradient(180deg, var(--surface), var(--surface-2));
+}
+.grid{ display:grid; grid-template-columns: 1fr; gap: 14px; }
+@media(min-width:900px){ .grid.two{ grid-template-columns: 1fr 1fr; } .grid.three{ grid-template-columns: 1fr 1fr 1fr; } }
+.section{ margin-top: 14px; }
+.toolbar{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin: 10px 0 0; }
+.btnrow{ display:flex; gap:10px; flex-wrap:wrap; }
+button, .btn{
+  appearance:none;
+  border:1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 800;
+  cursor:pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform .08s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+}
+button:hover, .btn:hover{ box-shadow: var(--shadow-md); transform: translateY(-1px); border-color: rgba(225,29,72,.25); }
+button:active, .btn:active{ transform: translateY(0); box-shadow: var(--shadow-sm); }
+.btn-primary{
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  border-color: rgba(0,0,0,0);
+  color: #fff;
+}
+.btn-primary:hover{ filter: saturate(1.05); }
+.btn-ghost{ background: transparent; border-color: transparent; box-shadow:none; color: var(--muted); }
+.btn-ghost:hover{ background: rgba(16,24,40,.04); border-color: rgba(16,24,40,.06); box-shadow:none; transform:none; }
+input, select, textarea{
+  width:100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border:1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  outline:none;
+  transition: box-shadow .18s ease, border-color .18s ease;
+}
+input:focus, select:focus, textarea:focus{ box-shadow: var(--focus); border-color: rgba(225,29,72,.45); }
+label{ display:block; color: var(--muted); font-weight:800; margin: 10px 0 6px; }
+.badge{
+  display:inline-flex; align-items:center; gap:6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  border:1px solid var(--border);
+  background: rgba(16,24,40,.03);
+  color: var(--muted);
+}
+.badge.ok{ background: rgba(18,183,106,.12); border-color: rgba(18,183,106,.22); color:#067647;}
+.badge.warn{ background: rgba(247,144,9,.14); border-color: rgba(247,144,9,.28); color:#B54708;}
+.badge.bad{ background: rgba(240,68,56,.12); border-color: rgba(240,68,56,.22); color:#B42318;}
+.badge.brand{ background: var(--brand-soft); border-color: rgba(225,29,72,.22); color: var(--brand); }
+.table-wrap{
+  width:100%;
+  overflow:auto;
+  border-radius: var(--r-md);
+  border:1px solid var(--border);
+  background: var(--surface);
+}
+table{ width:100%; border-collapse:separate; border-spacing:0; min-width: 760px; }
+thead th{
+  text-align:left;
+  font-size:13px;
+  color: var(--muted-2);
+  background: rgba(16,24,40,.02);
+  border-bottom:1px solid var(--border);
+  padding: 12px 14px;
+  position:sticky; top:0;
+}
+tbody td{ padding: 12px 14px; border-bottom:1px solid var(--border); }
+tbody tr:hover td{ background: rgba(225,29,72,.03); }
+tbody tr:last-child td{ border-bottom:none; }
+hr{ border:none; border-top:1px solid var(--border); margin: 14px 0; }
+.alert{
+  border:1px solid rgba(225,29,72,.25);
+  background: rgba(225,29,72,.06);
+  color: var(--text);
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+}
+.alert.error{ border-color: rgba(240,68,56,.28); background: rgba(240,68,56,.08); }
+.alert.ok{ border-color: rgba(18,183,106,.28); background: rgba(18,183,106,.08); }
+.mini{ font-size: 13px; color: var(--muted); }
+.hidden{ display:none !important; }
+@media(max-width:480px){
+  .container{ padding: 14px 12px 34px; }
+  .card{ padding: 16px; border-radius: 18px; }
+  button, .btn{ width: 100%; justify-content:center; }
+  .btnrow{ width:100%; }
+  .toolbar{ gap:12px; }
+  table{ min-width: 880px; }
+}
