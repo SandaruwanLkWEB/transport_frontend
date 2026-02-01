@@ -20,39 +20,12 @@ function toast(msg){
   window.__toastTimer = setTimeout(()=>{ t.style.display="none"; }, 2600);
 }
 
-function getApiBase(){
-  const base = (API_BASE_URL || "").trim().replace(/\/$/, "");
-  if (!base || base.includes("YOUR_TRANSPORT_BACKEND")) {
-    throw new Error("API සම්බන්ධතාව සකස් කරලා නැහැ. කරුණාකර assets/config.js තුළ API_BASE_URL ඔබගේ Transport Railway backend URL එකට දාන්න.");
-  }
-  return base;
-}
-
-let __backendChecked = false;
-async function ensureBackendIsTransport(){
-  if (__backendChecked) return;
-  __backendChecked = true;
-  const base = getApiBase();
-  try{
-    const res = await fetch(`${base}/health`, { method:"GET" });
-    const data = await res.json().catch(()=> ({}));
-    if (!res.ok || data.service !== "transport-request-api") {
-      __backendChecked = false;
-      throw new Error("API URL වැරදියි. මේ වෙබ් එක Transport system එකට අදාළ Railway backend එකට පමණයි connect වෙන්න ඕන. ( /health -> service: transport-request-api )");
-    }
-  }catch(e){
-    __backendChecked = false;
-    throw e;
-  }
-}
-
 async function api(path, options = {}) {
   const headers = Object.assign({ "Content-Type": "application/json" }, options.headers || {});
   const token = getToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  await ensureBackendIsTransport();
-  const base = getApiBase();
+  const base = (API_BASE_URL || "").replace(/\/$/, "");
   let res, text, data;
   try{
     res = await fetch(`${base}${path}`, Object.assign({}, options, { headers }));
@@ -63,16 +36,20 @@ async function api(path, options = {}) {
     throw new Error("ජාල/සම්බන්ධතා ගැටලුවක්. කරුණාකර නැවත උත්සාහ කරන්න.");
   }
 
-  // Logout ONLY on token invalid/expired
-  if (res.status === 401){
-    clearToken();
+  // Security/session handling:
+  // - Logout ONLY on 401 (expired/invalid token)
+  // - Do NOT logout on 403 (Forbidden). 403 can happen when a user opens a page
+  //   that is not allowed for their role, or HR/TA tries a restricted action.
+  //   Auto-logout causes the "login -> dashboard -> login" loop.
+  if (res.status === 401) {
+    // If there was a token, it is invalid/expired.
+    if (token) clearToken();
     location.href = "login.html";
-    throw new Error("නැවත ඇතුල් වන්න.");
+    throw new Error("සැසිය අවසන් විය. කරුණාකර නැවත ඇතුල් වන්න.");
   }
-
-  // 403 = token valid but no permission (do NOT clear token)
-  if (res.status === 403){
-    throw new Error(data.error || "මෙම ක්‍රියාව සඳහා අවසර නැහැ.");
+  if (res.status === 403) {
+    // Keep token; show a proper message.
+    throw new Error(data.error || data.message || "මෙම ක්‍රියාව සඳහා ඔබට අවසර නැහැ.");
   }
 
   if (!res.ok) throw new Error(data.error || data.message || `HTTP ${res.status}`);
@@ -82,28 +59,9 @@ async function api(path, options = {}) {
 async function loadMe() { return api("/me"); }
 
 async function guardRole(role){
-  try{
-    const me = await loadMe();
-    if(!me.me){ location.href="login.html"; return null; }
-    // cache role for safe redirects
-    try{ localStorage.setItem("meRole", me.me.role || ""); }catch(e){}
-    if (me.me.role !== role) {
-      // redirect to correct dashboard (no logout)
-      const r = me.me.role;
-      if(r==="ADMIN") location.href="admin.html";
-      else if(r==="HOD") location.href="hod.html";
-      else if(r==="TA") location.href="ta.html";
-      else if(r==="HR") location.href="hr.html";
-      else if(r==="EMP") location.href="emp.html";
-      else location.href="login.html";
-      return null;
-    }
-    return me.me;
-  }catch(e){
-    // Do not force logout on API misconfig/500/CORS
-    toast(e.message || "දෝෂයක්");
-    return null;
-  }
+  const me = await loadMe();
+  if(!me.me || me.me.role !== role){ location.href="login.html"; return null; }
+  return me.me;
 }
 
 function logout(){
@@ -153,11 +111,11 @@ function statusBadge(status){
   const map = {
     "DRAFT": ["කෙටුම්පත","warn"],
     "SUBMITTED": ["යොමු කර ඇත","warn"],
-    "ADMIN_APPROVED": ["පරිපාලක අනුමත","ok"],
+    "ADMIN_APPROVED": ["පරිපාලක අනුමත","good"],
     "TA_ASSIGNED_PENDING_HR": ["HR ඔවරයිඩ් අනුමැතිය බලාපොරොත්තු","warn"],
-    "TA_ASSIGNED": ["වාහන අනුයුක්ත කර ඇත","ok"],
+    "TA_ASSIGNED": ["වාහන අනුයුක්ත කර ඇත","good"],
     "TA_FIX_REQUIRED": ["TA විසින් සකස් කළ යුතුයි","warn"],
-    "HR_FINAL_APPROVED": ["අවසාන අනුමත","ok"],
+    "HR_FINAL_APPROVED": ["අවසාන අනුමත","good"],
     "REJECTED": ["ප්‍රතික්ෂේප","bad"]
   };
   const v = map[status] || [status, "badge"];
