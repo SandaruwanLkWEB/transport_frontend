@@ -465,7 +465,7 @@ function downloadVehicleReport(){
     renderRouteChecks([]);
     await loadVehicles();
     await loadRequests();
-  }catch(e){ toast(e.message); logout(); }
+  }catch(e){ toast(e.message); if(e && (e.status===401 || e.status===403)) logout(); }
 })();
 </script>
 </body>

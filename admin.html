@@ -31,13 +31,6 @@
   <!-- Approvals -->
   <div class="card" id="pane_approvals">
     <h2 style="margin:0 0 10px;">Requests (All Departments)</h2>
-    <hr/>
-    <h2 style="margin:0 0 10px;">HOD ලියාපදිංචි අනුමැතිය</h2>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Email</th><th>Department</th><th>Date</th><th>Action</th></tr></thead>
-      <tbody id="hodRegRows"><tr><td colspan="4" class="mini">Loading...</td></tr></tbody>
-    </table></div>
-
 
     <div class="row">
       <div>
@@ -121,7 +114,7 @@
     </div>
 
     <div class="card" style="background:#fff; border:1px solid var(--line);">
-      <h3 style="margin:0 0 10px;">ග්‍රාම</h3>
+      <h3 style="margin:0 0 10px;">Sub Routes</h3>
       <div class="row">
         <div>
           <label>Select Route</label>
@@ -133,7 +126,7 @@
         </div>
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="btn small" onclick="createSubRoute()">Add ග්‍රාම</button>
+        <button class="btn small" onclick="createSubRoute()">Add Sub Route</button>
         <button class="btn small ghost" onclick="loadSubRoutes()">Refresh</button>
       </div>
       <div class="hr"></div>
@@ -435,45 +428,8 @@ function downloadVehicleReport(){
     await loadDepartments();
     await loadRoutes();
     await loadSubRoutes();
-  }catch(e){ toast(e.message); logout(); }
+  }catch(e){ toast(e.message); if(e && (e.status===401 || e.status===403)) logout(); }
 })();
-
-
-async async function renderHodRegs(){
-  const tbody = document.getElementById('hodRegRows');
-  if(!tbody) return;
-  try{
-    const deps = await api('/admin/departments');
-    const d = await loadPendingHodRegs();
-    const list = d.pending_hod || [];
-    const depName = (id)=> (deps.departments||[]).find(x=>x.id===id)?.name || id || '';
-    if(list.length===0){ tbody.innerHTML = `<tr><td colspan='4' class='mini'>No pending</td></tr>`; return; }
-    tbody.innerHTML = list.map(u=>`<tr>
-      <td>${u.email}</td><td>${depName(u.department_id)}</td><td>${fmtDate(u.created_at||'')}</td>
-      <td><button class='btn' onclick='approveH(${u.id})'>Approve</button> <button class='btn' onclick='rejectH(${u.id})'>Reject</button></td>
-    </tr>`).join('');
-  }catch(e){ tbody.innerHTML = `<tr><td colspan='4'>${e.message}</td></tr>`; }
-}
-async function approveH(id){ await approveHodReg(id); await renderHodRegs(); toast('අනුමත කළා'); }
-async function rejectH(id){ await rejectHodReg(id); await renderHodRegs(); toast('ප්‍රතික්ෂේප කළා'); }
-
-async function doBulkSubs(){
-  const routeId = document.getElementById('routeId')?.value || document.getElementById('selRoute')?.value;
-  const lines = document.getElementById('bulkLines')?.value || '';
-  if(!routeId){ toast('Route තෝරන්න'); return; }
-  if(!lines.trim()){ toast('ග්‍රාම නාම දාන්න'); return; }
-  try{
-    const r = await bulkUpsertSubs(routeId, lines);
-    toast(`Bulk OK: ${r.inserted||0}`);
-    document.getElementById('bulkLines').value='';
-    // refresh subroutes list if function exists
-    if(typeof loadSubroutes==='function') loadSubroutes();
-  }catch(e){ toast(e.message); }
-}
-
-// Call HOD regs render after main load
-setTimeout(()=>{ try{ renderHodRegs(); }catch(e){} }, 400);
-
 </script>
 </body>
 </html>
