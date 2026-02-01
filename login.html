@@ -1,64 +1,68 @@
-<!DOCTYPE html>
-<html lang="si">
+<!doctype html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Transport System</title>
-    <link rel="stylesheet" href="assets/styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>පද්ධතියට පිවිසීම</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
 </head>
 <body>
-    <div class="auth-wrapper">
-        <div class="auth-card">
-            <h2 style="text-align: center; color: var(--primary);">පද්ධතියට පිවිසෙන්න</h2>
-            <p style="text-align: center; color: var(--text-muted); margin-bottom: 30px;">ඔබගේ විස්තර ඇතුලත් කරන්න</p>
-            
-            <form onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label>විද්‍යුත් තැපෑල (Email)</label>
-                    <input type="email" id="email" placeholder="user@company.lk" required>
-                </div>
-                <div class="form-group">
-                    <label>මුරපදය (Password)</label>
-                    <input type="password" id="password" placeholder="••••••••" required>
-                </div>
-                <button type="submit" class="btn w-100">පිවිසෙන්න</button>
-            </form>
+<header>
+  <h1>පද්ධතියට පිවිසෙන්න</h1>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <a href="register.html">ලියාපදිංචි වන්න</a>
+    <a href="index.html">මුල් පිටුව</a>
+  </div>
+</header>
 
-            <div style="margin-top: 20px; text-align: center; font-size: 0.9rem;">
-                ගිණුමක් නැද්ද? <a href="register.html" style="color: var(--primary);">ලියාපදිංචි වන්න</a>
-            </div>
-        </div>
+<div class="container">
+  <div class="card">
+    <label>ඊමේල්</label>
+    <input id="email" type="email" placeholder="name@company.lk" />
+    <label>මුරපදය</label>
+    <input id="password" type="password" placeholder="••••••••" />
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+      <button class="btn" onclick="doපිවිසෙන්න()">පිවිසෙන්න</button>
+      <button class="btn ghost" onclick="location.href='register.html'">ගිණුමක් තනන්න</button>
     </div>
+    <div class="hr"></div>
+    <p class="small">
+      ඔබ ව Web හරහාම ලියාපදිංචි වුණේ නම්, පළමුව HOD අනුමැතිය අවශ්‍යයි. පිවිසෙන්න බැරි නම්, ඔබගේ HOD වෙත දැනුම්දී ලියාපදිංචිය අනුමත කරගන්න.
+    </p>
+  </div>
+</div>
 
-    <script src="assets/config.js"></script>
-    <script src="assets/app.js"></script>
-    <script>
-        async function handleLogin(e) {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+<script>
+function dashForRole(role){
+  const map = { "ADMIN":"admin.html", "HOD":"hod.html", "HR":"hr.html", "TA":"ta.html", "EMP":"emp.html" };
+  return map[role] || "index.html";
+}
 
-            try {
-                const data = await api("/auth/login", {
-                    method: "POST",
-                    body: JSON.stringify({ email, password })
-                });
-                
-                setToken(data.token);
-                
-                // Role based redirect
-                const roleMap = { 
-                    "ADMIN": "admin.html", 
-                    "HOD": "hod.html", 
-                    "HR": "hr.html", 
-                    "TA": "ta.html", 
-                    "EMP": "emp.html" 
-                };
-                window.location.href = roleMap[data.role] || "index.html";
-            } catch (err) {
-                // Error is handled by api wrapper toast
-            }
-        }
-    </script>
+async function doපිවිසෙන්න(){
+  try{
+    const d = await api("/auth/login", {
+      method:"POST",
+      body: JSON.stringify({ email: qs("email").value.trim(), password: qs("password").value })
+    });
+    setToken(d.token);
+    const me = await loadMe();
+    location.href = dashForRole(me.me.role);
+  }catch(e){ toast(e.message); }
+}
+
+// If already logged in
+(async function init(){
+  try{
+    const t = getToken();
+    if(!t) return;
+    const me = await loadMe();
+    location.href = dashForRole(me.me.role);
+  }catch(e){
+    clearToken();
+  }
+})();
+</script>
 </body>
 </html>
