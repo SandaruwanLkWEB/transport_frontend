@@ -464,7 +464,7 @@ function downloadVehicleReport(){
     renderRouteChecks([]);
     await loadVehicles();
     await loadRequests();
-  }catch(e){ toast(e.message); logout(); }
+  }catch(e){ toast(e.message); /* don't auto-logout on non-401 errors */ }
 })();
 
 function todayISO(){

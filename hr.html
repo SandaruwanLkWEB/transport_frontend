@@ -144,7 +144,7 @@ function downloadVehicleReport(){
   try{
     await guard();
     await loadTARequests();
-  }catch(e){ toast(e.message); logout(); }
+  }catch(e){ toast(e.message); /* don't auto-logout on non-401 errors */ }
 })();
 
 function todayISO(){
