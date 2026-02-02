@@ -35,18 +35,13 @@ async function api(path, options = {}) {
     // Network / CORS / DNS issues
     throw new Error("ජාල/සම්බන්ධතා ගැටලුවක්. කරුණාකර නැවත උත්සාහ කරන්න.");
   }
-// Logout ONLY when token is invalid/expired
-if (res.status === 401){
-  clearToken();
-  location.href = "login.html";
-  throw new Error("නැවත ඇතුල් වන්න.");
-}
 
-// 403 = authenticated but not allowed. Do NOT logout.
-if (res.status === 403){
-  throw new Error("මෙ ක්‍රියාව සඳහා ඔබට අවසර නැත.");
-}
-
+  // Only logout on real auth errors
+  if (res.status === 401){
+    clearToken();
+    location.href = "login.html";
+    throw new Error("නැවත ඇතුල් වන්න.");
+  }
 
   if (!res.ok) throw new Error(data.error || data.message || `HTTP ${res.status}`);
   return data;
