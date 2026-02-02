@@ -41,7 +41,7 @@
     <div class="small">Reports download කරන්නේ HR Final Approval පස්සේම.</div>
     <div class="row">
       <div>
-        <label>Request ID</label>
+        <label>දිනය</label>
         <input id="repDate" type="date" type="number" placeholder="e.g. 12" />
       </div>
       <div>
@@ -126,8 +126,7 @@ async function finalApprove(id){
   try{
     await api(`/hr/requests/${id}/final-approve`, {method:"POST"});
     toast("අවසාන අනුමැතිය ලබා දුන්නා. වාර්තා සූදානම්.");
-    qs("repReqId").value = id;
-    await loadTARequests();
+await loadTARequests();
   }catch(e){ toast(e.message); }
 }
 
@@ -136,16 +135,11 @@ function downloadRouteReport(){
   if(!d){ toast("දිනය තෝරන්න"); return; }
   window.open(`${API_BASE_URL}/reports/daily/route-wise?date=${encodeURIComponent(d)}`, "_blank");
 }
-  window.open(`${API_BASE_URL}/reports/route-wise?request_id=${encodeURIComponent(id)}`, "_blank");
-}
 function downloadVehicleReport(){
   const d = qs("repDate").value;
   if(!d){ toast("දිනය තෝරන්න"); return; }
   window.open(`${API_BASE_URL}/reports/daily/vehicle?date=${encodeURIComponent(d)}`, "_blank");
 }
-  window.open(`${API_BASE_URL}/reports/vehicle?request_id=${encodeURIComponent(id)}`, "_blank");
-}
-
 (async function init(){
   try{
     await guard();

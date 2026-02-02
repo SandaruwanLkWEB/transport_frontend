@@ -455,16 +455,11 @@ function downloadRouteReport(){
   if(!d){ toast("දිනය තෝරන්න"); return; }
   window.open(`${API_BASE_URL}/reports/daily/route-wise?date=${encodeURIComponent(d)}`, "_blank");
 }
-  window.open(`${API_BASE_URL}/reports/route-wise?request_id=${encodeURIComponent(id)}`, "_blank");
-}
 function downloadVehicleReport(){
   const d = qs("repDate").value;
   if(!d){ toast("දිනය තෝරන්න"); return; }
   window.open(`${API_BASE_URL}/reports/daily/vehicle?date=${encodeURIComponent(d)}`, "_blank");
 }
-  window.open(`${API_BASE_URL}/reports/vehicle?request_id=${encodeURIComponent(id)}`, "_blank");
-}
-
 (async function init(){
   try{
     await guard();
