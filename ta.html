@@ -22,9 +22,9 @@
 
   <div class="card">
     <div class="tabs">
-      <button class="btn active" id="tabවාහන" onclick="setTab('vehicles')">වාහන</button>
-      <button class="btn" id="tabAssignments" onclick="setTab('assign')">Assignments</button>
-      <button class="btn" id="tabReports" onclick="setTab('reports')">Reports</button>
+      <button class="btn active" id="tabVehicles" onclick="setTab('vehicles')">වාහන</button>
+      <button class="btn" id="tabAssign" onclick="setTab('assign')">අනයුක්තිය</button>
+      <button class="btn" id="tabReports" onclick="setTab('reports')">වාර්තා</button>
     </div>
   </div>
 
@@ -66,7 +66,7 @@
     <div style="display:flex; gap:8px; flex-wrap:wrap;">
       <button class="btn" onclick="saveVehicle()">Save Vehicle</button>
       <button class="btn ghost" onclick="clearVehicleForm()">Clear</button>
-      <button class="btn ghost" onclick="loadවාහන()">Refresh</button>
+      <button class="btn ghost" onclick="loadVehicles()">Refresh</button>
     </div>
 
     <div class="hr"></div>
@@ -74,7 +74,7 @@
     <div class="row">
       <div>
         <label>සෙවීම</label>
-        <input id="vehසෙවීම" placeholder="vehicle no..." oninput="renderවාහන()" />
+        <input id="vehසෙවීම" placeholder="vehicle no..." oninput="renderVehicles()" />
       </div>
       <div></div>
     </div>
@@ -108,12 +108,12 @@
 
   <!-- Reports -->
   <div class="card" id="pane_reports" style="display:none;">
-    <h2 style="margin:0 0 10px;">බාගත කරන්න Reports</h2>
+    <h2 style="margin:0 0 10px;">වාර්තා බාගත කිරීම</h2>
     <div class="small">Reports download කරන්නේ HR Final Approval පස්සේම. Request එක select කරලා download කරන්න.</div>
     <div class="row">
       <div>
-        <label>Request ID</label>
-        <input id="repDate" type="date" type="number" placeholder="e.g. 12" />
+        <label>දිනය</label>
+        <input id="repDate" type="date" />
       </div>
       <div>
         <label>Actions</label>
@@ -464,7 +464,7 @@ function downloadVehicleReport(){
     renderRouteChecks([]);
     await loadVehicles();
     await loadRequests();
-  }catch(e){ toast(e.message); /* don't auto-logout on non-401 errors */ }
+  }catch(e){ toast(e.message); }
 })();
 
 function todayISO(){

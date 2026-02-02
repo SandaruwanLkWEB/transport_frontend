@@ -22,8 +22,8 @@
 
   <div class="card">
     <div class="tabs">
-      <button class="btn active" id="tabඅනුමත කරන්න" onclick="setTab('approve')">Final Approvals</button>
-      <button class="btn" id="tabReports" onclick="setTab('reports')">Reports</button>
+      <button class="btn active" id="tabApprove" onclick="setTab('approve')">අවසන් අනුමැතිය</button>
+      <button class="btn" id="tabReports" onclick="setTab('reports')">වාර්තා</button>
     </div>
   </div>
 
@@ -144,7 +144,7 @@ function downloadVehicleReport(){
   try{
     await guard();
     await loadTARequests();
-  }catch(e){ toast(e.message); /* don't auto-logout on non-401 errors */ }
+  }catch(e){ toast(e.message); logout(); }
 })();
 
 function todayISO(){
