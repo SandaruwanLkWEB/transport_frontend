@@ -42,7 +42,7 @@
     <div class="row">
       <div>
         <label>Request ID</label>
-        <input id="repReqId" type="number" placeholder="e.g. 12" />
+        <input id="repDate" type="date" type="number" placeholder="e.g. 12" />
       </div>
       <div>
         <label>Actions</label>
@@ -86,7 +86,7 @@ function render(){
   for(const r of LIST){
     html += `<tr>
       <td>${r.id}</td>
-      <td>${fmtDate(r.request_date)}</td>
+      <td>${r.request_date}</td>
       <td>${r.request_time}</td>
       <td>${r.department_name}</td>
       <td>${statusBadge(r.status)}</td>
@@ -132,13 +132,17 @@ async function finalApprove(id){
 }
 
 function downloadRouteReport(){
-  const id = qs("repReqId").value.trim();
-  if(!id){ toast("Enter request id"); return; }
+  const d = qs("repDate").value;
+  if(!d){ toast("දිනය තෝරන්න"); return; }
+  window.open(`${API_BASE_URL}/reports/daily/route-wise?date=${encodeURIComponent(d)}`, "_blank");
+}
   window.open(`${API_BASE_URL}/reports/route-wise?request_id=${encodeURIComponent(id)}`, "_blank");
 }
 function downloadVehicleReport(){
-  const id = qs("repReqId").value.trim();
-  if(!id){ toast("Enter request id"); return; }
+  const d = qs("repDate").value;
+  if(!d){ toast("දිනය තෝරන්න"); return; }
+  window.open(`${API_BASE_URL}/reports/daily/vehicle?date=${encodeURIComponent(d)}`, "_blank");
+}
   window.open(`${API_BASE_URL}/reports/vehicle?request_id=${encodeURIComponent(id)}`, "_blank");
 }
 
@@ -146,8 +150,19 @@ function downloadVehicleReport(){
   try{
     await guard();
     await loadTARequests();
-  }catch(e){ toast(e.message); }
+  }catch(e){ toast(e.message); logout(); }
 })();
+
+function todayISO(){
+  const d = new Date();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const da = String(d.getDate()).padStart(2,'0');
+  return `${d.getFullYear()}-${m}-${da}`;
+}
+(function(){
+  const rep = qs('repDate');
+  if(rep && !rep.value) rep.value = todayISO();
+})(); 
 </script>
 </body>
 </html>

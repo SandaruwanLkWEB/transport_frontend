@@ -113,7 +113,7 @@
     <div class="row">
       <div>
         <label>Request ID</label>
-        <input id="repReqId" type="number" placeholder="e.g. 12" />
+        <input id="repDate" type="date" type="number" placeholder="e.g. 12" />
       </div>
       <div>
         <label>Actions</label>
@@ -257,7 +257,7 @@ async function loadRequests(){
   // build select
   let html = '<option value="">-- Select --</option>';
   for(const r of REQS){
-    html += `<option value="${r.id}">#${r.id} | ${fmtDate(r.request_date)} ${r.request_time} | ${r.department_name} | ${r.status}</option>`;
+    html += `<option value="${r.id}">#${r.id} | ${r.request_date} ${r.request_time} | ${r.department_name} | ${r.status}</option>`;
   }
   qs("reqSelect").innerHTML = html;
 }
@@ -273,7 +273,7 @@ async function reloadCurrent(){
   try{
     if(!CURRENT_REQ) return;
     const req = REQS.find(x=>x.id===CURRENT_REQ);
-    qs("reqMeta").innerHTML = req ? `Selected: <b>#${req.id}</b> | ${fmtDate(req.request_date)} ${req.request_time} | Dept: ${req.department_name} | Status: ${statusBadge(req.status)}` : "";
+    qs("reqMeta").innerHTML = req ? `Selected: <b>#${req.id}</b> | ${req.request_date} ${req.request_time} | Dept: ${req.department_name} | Status: ${statusBadge(req.status)}` : "";
     const g = await api(`/ta/requests/${CURRENT_REQ}/groups`);
     GROUPS = g.groups || [];
     const a = await api(`/ta/requests/${CURRENT_REQ}/assignments`);
@@ -448,13 +448,17 @@ async function submitTA(){
 
 // Reports
 function downloadRouteReport(){
-  const id = qs("repReqId").value.trim();
-  if(!id){ toast("Enter request id"); return; }
+  const d = qs("repDate").value;
+  if(!d){ toast("දිනය තෝරන්න"); return; }
+  window.open(`${API_BASE_URL}/reports/daily/route-wise?date=${encodeURIComponent(d)}`, "_blank");
+}
   window.open(`${API_BASE_URL}/reports/route-wise?request_id=${encodeURIComponent(id)}`, "_blank");
 }
 function downloadVehicleReport(){
-  const id = qs("repReqId").value.trim();
-  if(!id){ toast("Enter request id"); return; }
+  const d = qs("repDate").value;
+  if(!d){ toast("දිනය තෝරන්න"); return; }
+  window.open(`${API_BASE_URL}/reports/daily/vehicle?date=${encodeURIComponent(d)}`, "_blank");
+}
   window.open(`${API_BASE_URL}/reports/vehicle?request_id=${encodeURIComponent(id)}`, "_blank");
 }
 
@@ -465,8 +469,19 @@ function downloadVehicleReport(){
     renderRouteChecks([]);
     await loadVehicles();
     await loadRequests();
-  }catch(e){ toast(e.message); }
+  }catch(e){ toast(e.message); logout(); }
 })();
+
+function todayISO(){
+  const d = new Date();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const da = String(d.getDate()).padStart(2,'0');
+  return `${d.getFullYear()}-${m}-${da}`;
+}
+(function(){
+  const rep = qs('repDate');
+  if(rep && !rep.value) rep.value = todayISO();
+})(); 
 </script>
 </body>
 </html>

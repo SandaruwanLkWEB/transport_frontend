@@ -17,6 +17,39 @@
   </div>
 </header>
 
+<main class="container">
+  <section class="card soft" style="margin-bottom:14px;">
+    <h2 class="h2">අද දවස අගුළු දමන්න (TA ට කලින්)</h2>
+    <p class="p-muted">සියලු දෙපාර්තමේන්තු ඉල්ලීම් එකතු කරලා එකම Daily Run එකක් සෑදේ. Lock කළ පසු HOD submissions/edit නවතී.</p>
+    <div class="toolbar">
+      <div style="min-width:220px;">
+        <label>දිනය</label>
+        <input id="runDate" type="date" />
+      </div>
+      <div class="btnrow">
+        <button class="btn" onclick="loadRunSummary()">යාවත්කාලීන කරන්න</button>
+        <button class="btn btn-primary" onclick="lockRun()">Lock Today → TA</button>
+      </div>
+    </div>
+    <div id="runMeta" style="margin-top:10px;"></div>
+    <div class="grid two" style="margin-top:12px;">
+      <div class="card">
+        <div class="h2">දෙපාර්තමේන්තු සාරාංශය</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>දෙපාර්තමේන්තුව</th><th>Submitted</th><th>Req</th><th>Employees</th></tr></thead>
+            <tbody id="runDeptRows"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="h2">නොලැබුණු දෙපාර්තමේන්තු</div>
+        <div id="runMissing" class="alert"></div>
+      </div>
+    </div>
+  </section>
+
+
 <div class="container">
   <div class="card" id="meBox"></div>
 
@@ -149,7 +182,7 @@
     <div class="row">
       <div>
         <label>Request ID</label>
-        <input id="repReqId" type="number" placeholder="e.g. 12" />
+        <input id="repDate" type="date" type="number" placeholder="e.g. 12" />
       </div>
       <div>
         <label>Actions</label>
@@ -185,23 +218,6 @@ async function guard(){
   qs("meBox").innerHTML = `<b>${ME.role}</b> | ${ME.email}`;
 }
 
-
-function routeLabel(route_id){
-  if(!ROUTE_TREE) return route_id??"";
-  const r = ROUTE_TREE.routes.find(x=>String(x.id)===String(route_id));
-  return r ? `${r.route_no} - ${r.route_name}` : (route_id??"");
-}
-function gramLabel(route_id, sub_id){
-  if(!ROUTE_TREE) return sub_id??"";
-  // try direct sub lookup first
-  const s = (ROUTE_TREE.sub_routes||[]).find(x=>String(x.id)===String(sub_id));
-  if(s) return s.sub_name;
-  // fallback: route->sub list
-  const r = (ROUTE_TREE.routes||[]).find(x=>String(x.id)===String(route_id));
-  const s2 = r?.sub_routes?.find(x=>String(x.id)===String(sub_id));
-  return s2 ? (s2.sub_name||s2.name||sub_id) : (sub_id??"");
-}
-
 async function loadRequests(){
   const d = await api("/admin/requests");
   REQS = d.requests || [];
@@ -222,7 +238,7 @@ function renderRequests(){
     const canApprove = r.status==="SUBMITTED";
     html += `<tr>
       <td>${r.id}</td>
-      <td>${fmtDate(r.request_date)}</td>
+      <td>${r.request_date}</td>
       <td>${r.request_time}</td>
       <td>${r.department_name}</td>
       <td>${statusBadge(r.status)}</td>
@@ -236,19 +252,18 @@ function renderRequests(){
 async function openDetail(id){
   try{
     const d = await api(`/admin/requests/${id}`);
-    await loadRouteTree();
     CURRENT = d.request;
     qs("reqDetail").style.display = "";
     qs("dReqId").textContent = id;
-    qs("dMeta").innerHTML = `Dept: <b>${d.request.department_name}</b> | Date: <b>${fmtDate(d.request.request_date)}</b> | Time: <b>${d.request.request_time}</b> | Status: ${statusBadge(d.request.status)}`;
+    qs("dMeta").innerHTML = `Dept: <b>${d.request.department_name}</b> | Date: <b>${d.request.request_date}</b> | Time: <b>${d.request.request_time}</b> | Status: ${statusBadge(d.request.status)}`;
 
-    let html = "<table><tr><th>සේවකයා</th><th>අංකය</th><th>රූට්</th><th>ග්‍රාම</th></tr>";
+    let html = "<table><tr><th>Employee</th><th>Emp No</th><th>Route</th><th>Sub</th></tr>";
     for(const e of d.employees){
       html += `<tr>
         <td>${e.full_name}</td>
         <td>${e.emp_no}</td>
-        <td>${routeLabel(e.effective_route_id)}</td>
-        <td>${gramLabel(e.effective_route_id, e.effective_sub_route_id)}</td>
+        <td>${e.effective_route_id ?? ""}</td>
+        <td>${e.effective_sub_route_id ?? ""}</td>
       </tr>`;
     }
     html += "</table>";
@@ -436,20 +451,23 @@ async function deleteSub(id){
 
 // Reports
 function downloadRouteReport(){
-  const id = qs("repReqId").value.trim();
-  if(!id){ toast("Enter request id"); return; }
+  const d = qs("repDate").value;
+  if(!d){ toast("දිනය තෝරන්න"); return; }
+  window.open(`${API_BASE_URL}/reports/daily/route-wise?date=${encodeURIComponent(d)}`, "_blank");
+}
   window.open(`${API_BASE_URL}/reports/route-wise?request_id=${encodeURIComponent(id)}`, "_blank");
 }
 function downloadVehicleReport(){
-  const id = qs("repReqId").value.trim();
-  if(!id){ toast("Enter request id"); return; }
+  const d = qs("repDate").value;
+  if(!d){ toast("දිනය තෝරන්න"); return; }
+  window.open(`${API_BASE_URL}/reports/daily/vehicle?date=${encodeURIComponent(d)}`, "_blank");
+}
   window.open(`${API_BASE_URL}/reports/vehicle?request_id=${encodeURIComponent(id)}`, "_blank");
 }
 
 (async function init(){
   try{
     await guard();
-    await loadRouteTree();
     await loadRequests();
     await loadDepartments();
     await loadRoutes();
@@ -486,13 +504,60 @@ async function doBulkSubs(){
     toast(`Bulk OK: ${r.inserted||0}`);
     document.getElementById('bulkLines').value='';
     // refresh subroutes list if function exists
-    if(typeof loadSubRoutes==='function') loadSubRoutes();
+    if(typeof loadSubroutes==='function') loadSubroutes();
   }catch(e){ toast(e.message); }
 }
 
 // Call HOD regs render after main load
 setTimeout(()=>{ try{ renderHodRegs(); }catch(e){} }, 400);
 
+
+// Daily Run (Admin Lock)
+function todayISO(){
+  const d = new Date();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const da = String(d.getDate()).padStart(2,'0');
+  return `${d.getFullYear()}-${m}-${da}`;
+}
+function setDefaultRunDate(){
+  const el = qs('runDate');
+  if(el && !el.value) el.value = todayISO();
+  const rep = qs('repDate');
+  if(rep && !rep.value) rep.value = todayISO();
+}
+async function loadRunSummary(){
+  try{
+    const date = qs('runDate').value || todayISO();
+    const data = await api(`/admin/run/${date}/summary`);
+    const meta = qs('runMeta');
+    const master = data.master_request ? `Master Request: #${data.master_request.id} (${data.master_request.status})` : 'Master Request: නැත (OPEN)';
+    meta.innerHTML = `<span class="badge brand">${date}</span> <span class="badge">${master}</span> <span class="badge ok">Submitted: ${data.submitted_departments}</span> <span class="badge bad">Missing: ${data.missing_departments.length}</span>`;
+    const tbody = qs('runDeptRows');
+    tbody.innerHTML = data.departments.map(r => `
+      <tr>
+        <td>${r.department_name}</td>
+        <td>${r.submitted ? '<span class="badge ok">ඔව්</span>' : '<span class="badge bad">නෑ</span>'}</td>
+        <td>${r.requests_count}</td>
+        <td>${r.employees_count}</td>
+      </tr>
+    `).join('');
+    qs('runMissing').innerHTML = data.missing_departments.length ? `<ul style="margin:0; padding-left:18px;">${data.missing_departments.map(n=>`<li>${n}</li>`).join('')}</ul>` : 'සියල්ලම ලැබී ඇත ✅';
+  }catch(e){
+    toast(e.message);
+  }
+}
+async function lockRun(){
+  try{
+    const date = qs('runDate').value || todayISO();
+    const data = await api(`/admin/run/${date}/lock`, { method:'POST' });
+    toast(`Lock කළා. Master Request #${data.master_request_id} (Employees: ${data.employees_added})`);
+    await loadRunSummary();
+  }catch(e){
+    toast(e.message);
+  }
+}
+setDefaultRunDate();
+loadRunSummary();
 </script>
 </body>
 </html>
