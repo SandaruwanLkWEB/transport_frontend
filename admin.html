@@ -185,6 +185,23 @@ async function guard(){
   qs("meBox").innerHTML = `<b>${ME.role}</b> | ${ME.email}`;
 }
 
+
+function routeLabel(route_id){
+  if(!ROUTE_TREE) return route_id??"";
+  const r = ROUTE_TREE.routes.find(x=>String(x.id)===String(route_id));
+  return r ? `${r.route_no} - ${r.route_name}` : (route_id??"");
+}
+function gramLabel(route_id, sub_id){
+  if(!ROUTE_TREE) return sub_id??"";
+  // try direct sub lookup first
+  const s = (ROUTE_TREE.sub_routes||[]).find(x=>String(x.id)===String(sub_id));
+  if(s) return s.sub_name;
+  // fallback: route->sub list
+  const r = (ROUTE_TREE.routes||[]).find(x=>String(x.id)===String(route_id));
+  const s2 = r?.sub_routes?.find(x=>String(x.id)===String(sub_id));
+  return s2 ? (s2.sub_name||s2.name||sub_id) : (sub_id??"");
+}
+
 async function loadRequests(){
   const d = await api("/admin/requests");
   REQS = d.requests || [];
@@ -205,7 +222,7 @@ function renderRequests(){
     const canApprove = r.status==="SUBMITTED";
     html += `<tr>
       <td>${r.id}</td>
-      <td>${r.request_date}</td>
+      <td>${fmtDate(r.request_date)}</td>
       <td>${r.request_time}</td>
       <td>${r.department_name}</td>
       <td>${statusBadge(r.status)}</td>
@@ -219,18 +236,19 @@ function renderRequests(){
 async function openDetail(id){
   try{
     const d = await api(`/admin/requests/${id}`);
+    await loadRouteTree();
     CURRENT = d.request;
     qs("reqDetail").style.display = "";
     qs("dReqId").textContent = id;
-    qs("dMeta").innerHTML = `Dept: <b>${d.request.department_name}</b> | Date: <b>${d.request.request_date}</b> | Time: <b>${d.request.request_time}</b> | Status: ${statusBadge(d.request.status)}`;
+    qs("dMeta").innerHTML = `Dept: <b>${d.request.department_name}</b> | Date: <b>${fmtDate(d.request.request_date)}</b> | Time: <b>${d.request.request_time}</b> | Status: ${statusBadge(d.request.status)}`;
 
-    let html = "<table><tr><th>Employee</th><th>Emp No</th><th>Route</th><th>Sub</th></tr>";
+    let html = "<table><tr><th>සේවකයා</th><th>අංකය</th><th>රූට්</th><th>ග්‍රාම</th></tr>";
     for(const e of d.employees){
       html += `<tr>
         <td>${e.full_name}</td>
         <td>${e.emp_no}</td>
-        <td>${e.effective_route_id ?? ""}</td>
-        <td>${e.effective_sub_route_id ?? ""}</td>
+        <td>${routeLabel(e.effective_route_id)}</td>
+        <td>${gramLabel(e.effective_route_id, e.effective_sub_route_id)}</td>
       </tr>`;
     }
     html += "</table>";
@@ -431,15 +449,16 @@ function downloadVehicleReport(){
 (async function init(){
   try{
     await guard();
+    await loadRouteTree();
     await loadRequests();
     await loadDepartments();
     await loadRoutes();
     await loadSubRoutes();
-  }catch(e){ toast(e.message); logout(); }
+  }catch(e){ toast(e.message); }
 })();
 
 
-async async function renderHodRegs(){
+async function renderHodRegs(){
   const tbody = document.getElementById('hodRegRows');
   if(!tbody) return;
   try{
@@ -467,7 +486,7 @@ async function doBulkSubs(){
     toast(`Bulk OK: ${r.inserted||0}`);
     document.getElementById('bulkLines').value='';
     // refresh subroutes list if function exists
-    if(typeof loadSubroutes==='function') loadSubroutes();
+    if(typeof loadSubRoutes==='function') loadSubRoutes();
   }catch(e){ toast(e.message); }
 }
 

@@ -51,7 +51,7 @@
 
     <div class="row">
       <div>
-        <label>Default Route</label>
+        <label>පෙරනිමි රූට්</label>
         <select id="eRoute"></select>
       </div>
       <div>
@@ -239,7 +239,7 @@ async function loadEmployees(){
 function renderEmployees(){
   const q = (qs("empSearch").value||"").toLowerCase();
   const list = EMP.filter(e => (e.full_name||"").toLowerCase().includes(q) || (e.emp_no||"").toLowerCase().includes(q));
-  let html = "<table><tr><th>Name</th><th>Emp No</th><th>Default Route</th><th>Default Sub</th><th>Active</th><th>Action</th></tr>";
+  let html = "<table><tr><th>Name</th><th>Emp No</th><th>පෙරනිමි රූට්</th><th>පෙරනිමි ග්‍රාම</th><th>Active</th><th>Action</th></tr>";
   for(const e of list){
     const routeOptions = optionHTML(
       ROUTE_TREE.routes.map(r=>({id:r.id, label:`${r.route_no} - ${r.route_name}`})),
@@ -313,7 +313,7 @@ async function addEmployee(){
 function renderSelectEmployees(){
   const q = (qs("selSearch").value||"").toLowerCase();
   const list = EMP.filter(e => e.is_active).filter(e => (e.full_name||"").toLowerCase().includes(q) || (e.emp_no||"").toLowerCase().includes(q));
-  let html = "<table><tr><th></th><th>Name</th><th>Emp No</th><th>Route</th><th>Sub</th></tr>";
+  let html = "<table><tr><th></th><th>Name</th><th>Emp No</th><th>රූට්</th><th>ග්‍රාම</th></tr>";
   for(const e of list){
     const routeOptions = optionHTML(
       ROUTE_TREE.routes.map(r=>({id:r.id, label:`${r.route_no} - ${r.route_name}`})),
@@ -397,7 +397,7 @@ function renderRequests(){
   for(const r of REQS){
     html += `<tr>
       <td>${r.id}</td>
-      <td>${r.request_date}</td>
+      <td>${fmtDate(r.request_date)}</td>
       <td>${r.request_time}</td>
       <td>${statusBadge(r.status)}</td>
       <td>
@@ -416,7 +416,7 @@ async function openEditor(id){
     const d = await api(`/hod/requests/${id}`);
     qs("reqEditor").style.display = "";
     qs("editReqId").textContent = id;
-    qs("reqMeta").innerHTML = `Date: <b>${d.request.request_date}</b> | Time: <b>${d.request.request_time}</b> | Status: ${statusBadge(d.request.status)}`;
+    qs("reqMeta").innerHTML = `Date: <b>${fmtDate(d.request.request_date)}</b> | Time: <b>${d.request.request_time}</b> | Status: ${statusBadge(d.request.status)}`;
 
     if(!["DRAFT","SUBMITTED"].includes(d.request.status)){
       qs("reqEmployeesBox").innerHTML = "<div class='small'>Request is locked (Admin approved or later). View only.</div>" + renderReqEmployeesTable(d.employees, true);
@@ -428,7 +428,7 @@ async function openEditor(id){
 }
 
 function renderReqEmployeesTable(items, readonly){
-  let html = "<table><tr><th>Name</th><th>Emp No</th><th>Effective Route</th><th>Effective Sub</th><th>Remove</th><th>Persist</th></tr>";
+  let html = "<table><tr><th>Name</th><th>Emp No</th><th>තෝරාගත් රූට්</th><th>තෝරාගත් ග්‍රාම</th><th>Remove</th><th>Persist</th></tr>";
   for(const it of items){
     const routeOptions = optionHTML(
       ROUTE_TREE.routes.map(r=>({id:r.id, label:`${r.route_no} - ${r.route_name}`})),
@@ -512,7 +512,6 @@ function closeEditor(){
     await loadRequests();
   }catch(e){
     toast(e.message);
-    logout();
   }
 })();
 </script>
