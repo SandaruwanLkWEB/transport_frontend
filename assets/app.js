@@ -115,7 +115,43 @@ function statusBadge(status){
 
 
 
-function fmtDate(s){ if(!s) return ''; if(typeof s==='string' && s.includes('T')) return s.split('T')[0]; return s; }
+function fmtDate(s){
+  if(!s) return "";
+  // Keep date stable (avoid timezone shifts)
+  if(typeof s === "string"){
+    if(s.includes("T")) return s.split("T")[0];
+    if(s.includes(" ")) return s.split(" ")[0];
+    return s;
+  }
+  return String(s);
+}
+
+function fmtTime(s){
+  if(!s) return "";
+  if(typeof s === "string"){
+    // "HH:MM:SS" -> "HH:MM"
+    if(/^\d{2}:\d{2}(:\d{2})?$/.test(s)) return s.slice(0,5);
+    // ISO datetime -> local HH:MM
+    if(s.includes("T")){
+      const d = new Date(s);
+      if(!isNaN(d)){
+        const hh = String(d.getHours()).padStart(2,"0");
+        const mm = String(d.getMinutes()).padStart(2,"0");
+        return `${hh}:${mm}`;
+      }
+      // fallback: take time part
+      const t = s.split("T")[1] || "";
+      return t.replace("Z","").slice(0,5);
+    }
+    // "YYYY-MM-DD HH:MM:SS" -> "HH:MM"
+    if(s.includes(" ")){
+      const t = s.split(" ")[1] || "";
+      return t.slice(0,5);
+    }
+    return s;
+  }
+  return String(s);
+}
 function fmtTime(s){ if(!s) return ''; if(typeof s==='string' && s.length>=5) return s.slice(0,5); return s; }
 function routeLabel(r){ if(!r) return ''; const no=(r.route_no||'').trim(); const name=(r.route_name||'').trim(); return (no&&name)?(`${no} - ${name}`):(name||no||''); }
 
