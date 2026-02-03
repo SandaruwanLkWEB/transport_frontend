@@ -74,7 +74,7 @@
     <div class="row">
       <div>
         <label>සෙවීම</label>
-        <input id="vehසෙවීම" placeholder="vehicle no..." oninput="renderVehicles()" />
+        <input id="vehSearch" placeholder="vehicle no..." oninput="renderVehicles()" />
       </div>
       <div></div>
     </div>
@@ -88,7 +88,7 @@
 
     <div class="row">
       <div>
-        <label>Select Request (Admin අනුමත කරන්නd)</label>
+        <label>Select Request (Admin අනුමත කරන්න)</label>
         <select id="reqSelect" onchange="selectRequest()"></select>
         <div class="small">Request එක select කරලා groups load වෙනවා. Group එකට වාහන 1ක් හෝ වැඩි ගණනක් දාන්න පුළුවන්.</div>
       </div>
@@ -450,12 +450,12 @@ async function submitTA(){
 function downloadRouteReport(){
   const d = qs("repDate").value;
   if(!d){ toast("දිනය තෝරන්න"); return; }
-  window.open(`${API_BASE_URL}/reports/daily/route-wise?date=${encodeURIComponent(d)}`, "_blank");
+  window.open(`${apiBase()}/reports/daily/route-wise?date=${encodeURIComponent(d)}`, "_blank");
 }
 function downloadVehicleReport(){
   const d = qs("repDate").value;
   if(!d){ toast("දිනය තෝරන්න"); return; }
-  window.open(`${API_BASE_URL}/reports/daily/vehicle?date=${encodeURIComponent(d)}`, "_blank");
+  window.open(`${apiBase()}/reports/daily/vehicle?date=${encodeURIComponent(d)}`, "_blank");
 }
 (async function init(){
   try{

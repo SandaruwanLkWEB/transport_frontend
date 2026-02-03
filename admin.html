@@ -181,8 +181,8 @@
     <div class="small">HR Final Approval පස්සේම download කරන්න.</div>
     <div class="row">
       <div>
-        <label>Request ID</label>
-        <input id="repDate" type="date" type="number" placeholder="e.g. 12" />
+        <label>දිනය</label>
+        <input id="repDate" type="date" />
       </div>
       <div>
         <label>Actions</label>
@@ -453,12 +453,12 @@ async function deleteSub(id){
 function downloadRouteReport(){
   const d = qs("repDate").value;
   if(!d){ toast("දිනය තෝරන්න"); return; }
-  window.open(`${API_BASE_URL}/reports/daily/route-wise?date=${encodeURIComponent(d)}`, "_blank");
+  window.open(`${apiBase()}/reports/daily/route-wise?date=${encodeURIComponent(d)}`, "_blank");
 }
 function downloadVehicleReport(){
   const d = qs("repDate").value;
   if(!d){ toast("දිනය තෝරන්න"); return; }
-  window.open(`${API_BASE_URL}/reports/daily/vehicle?date=${encodeURIComponent(d)}`, "_blank");
+  window.open(`${apiBase()}/reports/daily/vehicle?date=${encodeURIComponent(d)}`, "_blank");
 }
 (async function init(){
   try{
