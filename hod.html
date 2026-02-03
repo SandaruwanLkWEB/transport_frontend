@@ -398,7 +398,7 @@ function renderRequests(){
     html += `<tr>
       <td>${r.id}</td>
       <td>${fmtDate(r.request_date)}</td>
-      <td>${r.request_time}</td>
+      <td>${fmtTime(r.request_time)}</td>
       <td>${statusBadge(r.status)}</td>
       <td>
         <button class="btn small" onclick="openEditor(${r.id})">View / Edit</button>
@@ -416,7 +416,7 @@ async function openEditor(id){
     const d = await api(`/hod/requests/${id}`);
     qs("reqEditor").style.display = "";
     qs("editReqId").textContent = id;
-    qs("reqMeta").innerHTML = `Date: <b>${fmtDate(d.request.request_date)}</b> | Time: <b>${d.request.request_time}</b> | Status: ${statusBadge(d.request.status)}`;
+    qs("reqMeta").innerHTML = `Date: <b>${fmtDate(d.request.request_date)}</b> | Time: <b>${fmtTime(d.request.request_time)}</b> | Status: ${statusBadge(d.request.status)}`;
 
     if(!["DRAFT","SUBMITTED"].includes(d.request.status)){
       qs("reqEmployeesBox").innerHTML = "<div class='small'>Request is locked (Admin approved or later). View only.</div>" + renderReqEmployeesTable(d.employees, true);

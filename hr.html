@@ -86,8 +86,8 @@ function render(){
   for(const r of LIST){
     html += `<tr>
       <td>${r.id}</td>
-      <td>${r.request_date}</td>
-      <td>${r.request_time}</td>
+      <td>${fmtDate(r.request_date)}</td>
+      <td>${fmtTime(r.request_time)}</td>
       <td>${r.department_name}</td>
       <td>${statusBadge(r.status)}</td>
       <td>

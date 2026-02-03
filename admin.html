@@ -238,8 +238,8 @@ function renderRequests(){
     const canApprove = r.status==="SUBMITTED";
     html += `<tr>
       <td>${r.id}</td>
-      <td>${r.request_date}</td>
-      <td>${r.request_time}</td>
+      <td>${fmtDate(r.request_date)}</td>
+      <td>${fmtTime(r.request_time)}</td>
       <td>${r.department_name}</td>
       <td>${statusBadge(r.status)}</td>
       <td><button class="btn small" onclick="openDetail(${r.id})">View</button></td>
@@ -255,7 +255,7 @@ async function openDetail(id){
     CURRENT = d.request;
     qs("reqDetail").style.display = "";
     qs("dReqId").textContent = id;
-    qs("dMeta").innerHTML = `Dept: <b>${d.request.department_name}</b> | Date: <b>${d.request.request_date}</b> | Time: <b>${d.request.request_time}</b> | Status: ${statusBadge(d.request.status)}`;
+    qs("dMeta").innerHTML = `Dept: <b>${d.request.department_name}</b> | Date: <b>${fmtDate(d.request.request_date)}</b> | Time: <b>${fmtTime(d.request.request_time)}</b> | Status: ${statusBadge(d.request.status)}`;
 
     let html = "<table><tr><th>Employee</th><th>Emp No</th><th>Route</th><th>Sub</th></tr>";
     for(const e of d.employees){
