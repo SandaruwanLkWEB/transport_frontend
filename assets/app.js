@@ -135,33 +135,3 @@ async function rejectHodReg(id){
 async function bulkUpsertSubs(routeId, lines){
   return api(`/admin/routes/${routeId}/subroutes/bulk`, { method:"POST", body: JSON.stringify({ lines }) });
 }
-
-// ------------------------------------------------------------
-// Global footer links (About / Privacy / Data Protection)
-// Adds a small footer on every page without touching each HTML file.
-// ------------------------------------------------------------
-function injectGlobalFooter(){
-  try {
-    if (document.getElementById('global-footer')) return;
-
-    const footer = document.createElement('footer');
-    footer.id = 'global-footer';
-    footer.className = 'global-footer';
-    footer.innerHTML = `
-      <div class="global-footer__inner">
-        <a href="/about.html">අප ගැන</a>
-        <span class="dot">•</span>
-        <a href="/privacy.html">පෞද්ගලිකත්ව ප්‍රතිපත්තිය</a>
-        <span class="dot">•</span>
-        <a href="/data-protection.html">දත්ත ආරක්ෂාව</a>
-        <span class="dot">•</span>
-        <a href="mailto:contract@dsitransport.top">contract@dsitransport.top</a>
-      </div>
-    `;
-    document.body.appendChild(footer);
-  } catch (_) {
-    // ignore
-  }
-}
-
-document.addEventListener('DOMContentLoaded', injectGlobalFooter);
