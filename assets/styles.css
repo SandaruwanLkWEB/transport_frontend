@@ -33,6 +33,7 @@
 }
 *{ box-sizing:border-box; }
 html,body{ height:100%; }
+html, body{ overflow-x:hidden; }
 body{
   margin:0;
   background: radial-gradient(1200px 700px at 20% -10%, rgba(225,29,72,.08), transparent 60%),
@@ -175,8 +176,10 @@ hr{ border:none; border-top:1px solid var(--border); margin: 14px 0; }
 @media(max-width:480px){
   .container{ padding: 14px 12px 34px; }
   .card{ padding: 16px; border-radius: 18px; }
-  button, .btn{ width: 100%; justify-content:center; }
+  /* Mobile: stack button rows, but don't force every header/tab button full width */
   .btnrow{ width:100%; }
+  .btnrow button, .btnrow .btn{ width:100%; justify-content:center; }
+  form button, form .btn{ width:100%; justify-content:center; }
   .toolbar{ gap:12px; }
 }
 
@@ -199,7 +202,9 @@ header h1{ margin:0; font-size: 20px; letter-spacing:-.2px; }
 .tabs{ display:flex; gap:10px; flex-wrap:wrap; }
 
 .row{ display:flex; gap:12px; flex-wrap:wrap; }
-.row > div{ flex: 1 1 240px; min-width: 220px; }
+.row > div{ flex: 1 1 240px; min-width: 0; }
+
+@media(min-width:640px){ .row > div{ min-width:220px; } }
 
 .hr{ border-top:1px solid var(--border); margin: 14px 0; }
 
@@ -218,4 +223,11 @@ header h1{ margin:0; font-size: 20px; letter-spacing:-.2px; }
   header{ flex-wrap:wrap; }
   header .btn{ width:auto; }
   .tabs .btn{ flex: 1 1 160px; }
+}
+
+
+/* Mobile: prevent runaway horizontal scroll on narrow screens */
+@media(max-width:520px){
+  .table-wrap table{ width:100%; min-width:100%; }
+  .table-wrap table th, .table-wrap table td{ white-space: normal; }
 }
