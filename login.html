@@ -1,7 +1,4 @@
-<!DOCTYPE html>
 <!doctype html><html><head>
-<meta name="robots" content="noindex,nofollow" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://transport-production-e5c7.up.railway.app; font-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests" />
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>ඇතුල්වීම</title>
 <link rel="stylesheet" href="assets/styles.css"/>
@@ -28,5 +25,27 @@
       </div></div>
   </div>
 </div>
-<script src="assets/pages/login.page.js"></script>
+<script>
+document.getElementById("btnLogin").onclick = async ()=>{
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const msg = document.getElementById("msg");
+  msg.classList.add("hidden");
+  try{
+    const d = await api("/auth/login", { method:"POST", body: JSON.stringify({ email, password }) });
+    setToken(d.token);
+    const me = await loadMe();
+    const role = me.me && me.me.role;
+    if(role==="ADMIN") location.href="admin.html";
+    else if(role==="HOD") location.href="hod.html";
+    else if(role==="TA") location.href="ta.html";
+    else if(role==="HR") location.href="hr.html";
+    else if(role==="EMP") location.href="emp.html";
+    else location.href="login.html";
+  }catch(e){
+    msg.textContent = e.message || "අසමත් විය";
+    msg.classList.remove("hidden");
+  }
+};
+</script>
 </body></html>
