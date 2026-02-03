@@ -226,8 +226,30 @@ header h1{ margin:0; font-size: 20px; letter-spacing:-.2px; }
 }
 
 
-/* Mobile: prevent runaway horizontal scroll on narrow screens */
+/* Mobile: keep tables usable (scroll instead of breaking layout) */
 @media(max-width:520px){
-  .table-wrap table{ width:100%; min-width:100%; }
-  .table-wrap table th, .table-wrap table td{ white-space: normal; }
+  .table-wrap{ overflow-x:auto; -webkit-overflow-scrolling: touch; }
+  .table-wrap table{ width:max-content; min-width: 640px; }
+  .table-wrap table th, .table-wrap table td{
+    white-space: nowrap;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  /* Tables that are injected without .table-wrap */
+  .card table{
+    display:block;
+    width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .card table th, .card table td{ white-space: nowrap; }
+
+  h1{ font-size: 22px; }
+  h2{ font-size: 18px; }
+  .card{ padding: 14px; }
+  .pill{ font-size: 12px; padding: 6px 10px; }
+}
+
+.table-wrap table th, .table-wrap table td{ white-space: normal; }
 }
