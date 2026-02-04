@@ -316,54 +316,56 @@ async function finalApprove(id){
   }catch(e){ toast("❌ " + e.message); }
 }
 
-window.open(`${API_BASE_URL || ''}/reports/daily/route-wise?date=${encodeURIComponent(d)}`, "_blank");
-}
 
-window.open(`${API_BASE_URL || ''}/reports/daily/vehicle?date=${encodeURIComponent(d)}`, "_blank");
-}
-
-async function downloadPdfWithAuth(path, filename){
-  const token = getToken();
-  if(!token){ toast("❌ Unauthorized: නැවත Login වෙන්න"); return; }
-
-  const base = (API_BASE_URL || "").replace(/\/$/, "");
-  const url = `${base}${path}`;
-
+async function downloadPdfWithAuth(url, filename){
   try{
-    const res = await fetch(url, { headers: { "Authorization": `Bearer ${token}` } });
+    const token = (typeof getToken === "function") ? getToken() : localStorage.getItem("token");
+    const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+    const res = await fetch(url, { method:"GET", headers });
+    if(res.status === 401){
+      if (typeof clearToken === "function") clearToken(); else localStorage.removeItem("token");
+      location.href = "login.html";
+      return;
+    }
     if(!res.ok){
-      const t = await res.text();
-      // try parse json message
-      let msg = `HTTP ${res.status}`;
-      try{ const j = t ? JSON.parse(t) : null; msg = (j && (j.error || j.message)) || msg; }catch(e){}
-      throw new Error(msg);
+      const text = await res.text();
+      let msg = text;
+      try{ const j = text ? JSON.parse(text) : {}; msg = j.error || j.message || text; }catch(e){}
+      msg = (msg && String(msg).trim()) || `Server error (HTTP ${res.status}).`;
+      if (typeof toast === "function") toast(msg); else alert(msg);
+      return;
     }
     const blob = await res.blob();
-    const objectUrl = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = objectUrl;
-    a.download = filename;
+    const objUrl = URL.createObjectURL(blob);
+    a.href = objUrl;
+    a.download = filename || "report.pdf";
     document.body.appendChild(a);
     a.click();
-    a.remove();
-    setTimeout(()=>URL.revokeObjectURL(objectUrl), 1000);
+    setTimeout(() => {
+      URL.revokeObjectURL(objUrl);
+      a.remove();
+    }, 1200);
   }catch(e){
-    toast("❌ " + e.message);
+    const msg = "ජාල/සම්බන්ධතා ගැටලුවක්. කරුණාකර නැවත උත්සාහ කරන්න.";
+    if (typeof toast === "function") toast(msg); else alert(msg);
   }
 }
 
 function downloadRouteReport(){
   const d = qs("repDate").value;
   if(!d){ toast("⚠️ දිනය තෝරන්න"); return; }
-  const file = `route-wise_${d}.pdf`;
-  downloadPdfWithAuth(`/reports/daily/route-wise?date=${encodeURIComponent(d)}`, file);
+  const base = (API_BASE_URL || "").replace(/\/$/, "");
+  const url = `${base}/reports/daily/route-wise?date=${encodeURIComponent(d)}`;
+  downloadPdfWithAuth(url, `route-wise-${d}.pdf`);
 }
 
 function downloadVehicleReport(){
   const d = qs("repDate").value;
   if(!d){ toast("⚠️ දිනය තෝරන්න"); return; }
-  const file = `vehicle_${d}.pdf`;
-  downloadPdfWithAuth(`/reports/daily/vehicle?date=${encodeURIComponent(d)}`, file);
+  const base = (API_BASE_URL || "").replace(/\/$/, "");
+  const url = `${base}/reports/daily/vehicle?date=${encodeURIComponent(d)}`;
+  downloadPdfWithAuth(url, `vehicle-${d}.pdf`);
 }
 
 (async function init(){
