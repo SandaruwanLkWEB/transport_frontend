@@ -469,12 +469,12 @@ async function submitTA(){
 function downloadRouteReport(){
   const d = qs("repDate").value;
   if(!d){ toast("⚠️ දිනය තෝරන්න"); return; }
-  window.open(`${apiBase()}/reports/daily/route-wise?date=${encodeURIComponent(d)}`, "_blank");
+  window.open(`${API_BASE_URL || ''}/reports/daily/route-wise?date=${encodeURIComponent(d)}`, "_blank");
 }
 function downloadVehicleReport(){
   const d = qs("repDate").value;
   if(!d){ toast("⚠️ දිනය තෝරන්න"); return; }
-  window.open(`${apiBase()}/reports/daily/vehicle?date=${encodeURIComponent(d)}`, "_blank");
+  window.open(`${API_BASE_URL || ''}/reports/daily/vehicle?date=${encodeURIComponent(d)}`, "_blank");
 }
 (async function init(){
   try{
