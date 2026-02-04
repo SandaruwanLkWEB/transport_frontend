@@ -1,181 +1,99 @@
-function getToken() { return localStorage.getItem("token"); }
-function setToken(t) { localStorage.setItem("token", t); }
-function clearToken() { localStorage.removeItem("token"); }
+// Enhanced loading state fixes for admin dashboard
 
-function qs(id){ return document.getElementById(id); }
-function qsa(sel){ return Array.from(document.querySelectorAll(sel)); }
-
-function ensureToast(){
-  if (document.getElementById("toast")) return;
-  const div = document.createElement("div");
-  div.id = "toast";
-  document.body.appendChild(div);
-}
-function toast(msg){
-  ensureToast();
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.style.display = "block";
-  clearTimeout(window.__toastTimer);
-  window.__toastTimer = setTimeout(()=>{ t.style.display="none"; }, 2600);
-}
-
-async function api(path, options = {}) {
-  const headers = Object.assign({ "Content-Type": "application/json" }, options.headers || {});
-  const token = getToken();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-
-  const base = (API_BASE_URL || "").replace(/\/$/, "");
-  let res, text, data;
-  try{
-    res = await fetch(`${base}${path}`, Object.assign({}, options, { headers }));
-    text = await res.text();
-    try { data = text ? JSON.parse(text) : {}; } catch (e) { data = { raw: text }; }
-  }catch(e){
-    // Network / CORS / DNS issues
-    throw new Error("ජාල/සම්බන්ධතා ගැටලුවක්. කරුණාකර නැවත උත්සාහ කරන්න.");
-  }
-
-  // Only logout on real auth errors
-  if (res.status === 401){
-    clearToken();
-    location.href = "login.html";
-    throw new Error("නැවත ඇතුල් වන්න.");
-  }
-
-  if (!res.ok) throw new Error(data.error || data.message || `HTTP ${res.status}`);
-  return data;
-}
-
-async function loadMe() { return api("/me"); }
-
-async function guardRole(role){
-  const me = await loadMe();
-  if(!me.me || me.me.role !== role){ location.href="login.html"; return null; }
-  return me.me;
-}
-
-function logout(){
-  clearToken();
-  location.href = "login.html";
-}
-
-// ---- Lookups (routes/subroutes) ----
-let ROUTE_TREE = null;
-async function loadRouteTree(){
-  if(ROUTE_TREE) return ROUTE_TREE;
-  try{
-    const cached = localStorage.getItem("routesTree");
-    if(cached){
-      const obj = JSON.parse(cached);
-      // cache up to 6 hours
-      if(obj && obj.at && (Date.now() - obj.at) < (6*60*60*1000) && obj.data){
-        ROUTE_TREE = obj.data;
-        return ROUTE_TREE;
+// Daily Run Summary - Enhanced with loading states
+async function loadRunSummary(){
+  const date = qs('runDate')?.value || todayISO();
+  const metaDiv = qs('runMeta');
+  const tbody = qs('runDeptRows');
+  const missingDiv = qs('runMissing');
+  
+  try {
+    // Show loading state
+    if(metaDiv) metaDiv.innerHTML = '<span class="badge">⏳ පූරණය වෙමින්...</span>';
+    if(tbody) tbody.innerHTML = '<tr><td colspan="4" class="mini" style="text-align:center; padding:16px;">⏳ දත්ත පූරණය වෙමින්...</td></tr>';
+    if(missingDiv) {
+      missingDiv.innerHTML = 'පූරණය වෙමින්...';
+      missingDiv.className = 'alert';
+    }
+    
+    const data = await api(`/admin/run/${date}/summary`);
+    
+    // Update meta info
+    if(metaDiv) {
+      const master = data.master_request 
+        ? `Master Request: #${data.master_request.id} (${data.master_request.status})` 
+        : 'Master Request: නැත (OPEN)';
+      metaDiv.innerHTML = `
+        <span class="badge brand">${date}</span> 
+        <span class="badge">${master}</span> 
+        <span class="badge ok">Submitted: ${data.submitted_departments || 0}</span> 
+        <span class="badge ${(data.missing_departments?.length || 0) > 0 ? 'bad' : 'ok'}">Missing: ${data.missing_departments?.length || 0}</span>
+      `;
+    }
+    
+    // Update department table
+    if(tbody) {
+      if(data.departments && data.departments.length > 0) {
+        tbody.innerHTML = data.departments.map(r => `
+          <tr>
+            <td><strong>${r.department_name}</strong></td>
+            <td>${r.submitted ? '<span class="badge ok">✅ ඔව්</span>' : '<span class="badge bad">❌ නෑ</span>'}</td>
+            <td><span class="badge">${r.requests_count || 0}</span></td>
+            <td><span class="badge">${r.employees_count || 0}</span></td>
+          </tr>
+        `).join('');
+      } else {
+        tbody.innerHTML = '<tr><td colspan="4" class="mini" style="text-align:center; padding:16px;">දත්ත නැත</td></tr>';
       }
     }
-  }catch(e){}
-
-  const d = await api("/lookup/routes-tree");
-  ROUTE_TREE = { routes: d.routes || [], sub_routes: d.sub_routes || [] };
-  localStorage.setItem("routesTree", JSON.stringify({ at: Date.now(), data: ROUTE_TREE }));
-  return ROUTE_TREE;
-}
-
-function subRoutesFor(route_id){
-  if(!ROUTE_TREE) return [];
-  return ROUTE_TREE.sub_routes.filter(s => String(s.route_id) === String(route_id));
-}
-
-function optionHTML(list, valueKey, labelKey, selectedValue, includeEmpty=true, emptyLabel="-- තෝරන්න --"){
-  let html = includeEmpty ? `<option value="">${emptyLabel}</option>` : "";
-  for(const x of list){
-    const v = x[valueKey];
-    const label = x[labelKey];
-    const sel = String(v) === String(selectedValue) ? "selected" : "";
-    html += `<option value="${v}" ${sel}>${label}</option>`;
-  }
-  return html;
-}
-
-function statusBadge(status){
-  const map = {
-    "DRAFT": ["කෙටුම්පත","warn"],
-    "SUBMITTED": ["යොමු කර ඇත","warn"],
-    "ADMIN_APPROVED": ["පරිපාලක අනුමත","ok"],  // FIXED: changed "good" to "ok"
-    "TA_ASSIGNED_PENDING_HR": ["HR ඔවරයිඩ් අනුමැතිය බලාපොරොත්තු","warn"],
-    "TA_ASSIGNED": ["වාහන අනුයුක්ත කර ඇත","ok"],  // FIXED: changed "good" to "ok"
-    "TA_FIX_REQUIRED": ["TA විසින් සකස් කළ යුතුයි","warn"],
-    "HR_FINAL_APPROVED": ["අවසාන අනුමත","ok"],  // FIXED: changed "good" to "ok"
-    "REJECTED": ["ප්‍රතික්ෂේප","bad"]
-  };
-  const v = map[status] || [status, "badge"];
-  return `<span class="badge ${v[1]}">${v[0]}</span>`;
-}
-
-function fmtDate(s){
-  if(!s) return "";
-  // Keep date stable (avoid timezone shifts)
-  if(typeof s === "string"){
-    if(s.includes("T")) return s.split("T")[0];
-    if(s.includes(" ")) return s.split(" ")[0];
-    return s;
-  }
-  return String(s);
-}
-
-// FIXED: Consolidated single fmtTime function with full functionality
-function fmtTime(s){
-  if(!s) return "";
-  if(typeof s === "string"){
-    // Simple HH:MM or HH:MM:SS format
-    if(/^\d{2}:\d{2}(:\d{2})?$/.test(s)) return s.slice(0,5);
     
-    // ISO datetime -> local HH:MM
-    if(s.includes("T")){
-      const d = new Date(s);
-      if(!isNaN(d)){
-        const hh = String(d.getHours()).padStart(2,"0");
-        const mm = String(d.getMinutes()).padStart(2,"0");
-        return `${hh}:${mm}`;
+    // Update missing departments
+    if(missingDiv) {
+      const missing = data.missing_departments || [];
+      if(missing.length > 0) {
+        missingDiv.innerHTML = `<ul style="margin:0; padding-left:18px;">${missing.map(n=>`<li><strong>${n}</strong></li>`).join('')}</ul>`;
+        missingDiv.className = 'alert warn';
+      } else {
+        missingDiv.innerHTML = '✅ සියල්ලම ලැබී ඇත';
+        missingDiv.className = 'alert ok';
       }
-      // fallback: take time part
-      const t = s.split("T")[1] || "";
-      return t.replace("Z","").slice(0,5);
     }
     
-    // "YYYY-MM-DD HH:MM:SS" format
-    if(s.includes(" ")){
-      const t = s.split(" ")[1] || "";
-      return t.slice(0,5);
+  } catch(e) {
+    console.error('Load run summary error:', e);
+    
+    // Show error state
+    if(metaDiv) {
+      metaDiv.innerHTML = '<span class="badge bad">⚠️ දෝෂයක් සිදු විය</span>';
     }
     
-    // Default: return first 5 chars if length >= 5
-    if(s.length >= 5) return s.slice(0,5);
-    return s;
+    if(tbody) {
+      const errorMessage = e.message.includes('404') || e.message.includes('not found')
+        ? 'ℹ️ මෙම දිනය සඳහා දත්ත නොමැත'
+        : `⚠️ දෝෂයක්: ${e.message}`;
+      
+      tbody.innerHTML = `<tr><td colspan="4" class="mini" style="text-align:center; padding:16px; color:var(--muted);">${errorMessage}</td></tr>`;
+    }
+    
+    if(missingDiv) {
+      missingDiv.innerHTML = 'දත්ත පූරණය කිරීමට නොහැකි විය';
+      missingDiv.className = 'alert error';
+    }
+    
+    toast('❌ දෝෂයක්: ' + e.message);
   }
-  return String(s);
 }
 
-function routeLabel(r){ 
-  if(!r) return ''; 
-  const no=(r.route_no||'').trim(); 
-  const name=(r.route_name||'').trim(); 
-  return (no&&name)?(`${no} - ${name}`):(name||no||''); 
+// Initialize - call on page load
+async function initAdminDashboard() {
+  // Set default date
+  setDefaultRunDate();
+  
+  // Load run summary with delay to avoid race conditions
+  setTimeout(async () => {
+    await loadRunSummary();
+  }, 300);
 }
 
-// ---- Admin: HOD registration approvals ----
-async function loadPendingHodRegs(){
-  return api("/admin/hod-registrations");
-}
-async function approveHodReg(id){
-  return api(`/admin/hod-registrations/${id}/approve`, { method:"POST" });
-}
-async function rejectHodReg(id){
-  return api(`/admin/hod-registrations/${id}/reject`, { method:"POST" });
-}
-
-// ---- Admin: Bulk sub-routes (grams) ----
-async function bulkUpsertSubs(routeId, lines){
-  return api(`/admin/routes/${routeId}/subroutes/bulk`, { method:"POST", body: JSON.stringify({ lines }) });
-}
+// Call this instead of direct loadRunSummary()
+// initAdminDashboard();
