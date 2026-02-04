@@ -243,15 +243,27 @@ function editVehicle(id){
 
 async function saveVehicle(){
   try{
-    const vno = qs("vNo").value.trim();
+    let vno = (qs("vNo").value || "").trim();
     const vtype = qs("vType").value;
     const cap = parseInt(qs("vCap").value,10);
-    const owner = qs("vOwner").value.trim();
+    const owner = (qs("vOwner").value || "").trim();
     const routes = selectedRouteIds();
-    if(!vno || !vtype || !cap || !owner){
+
+    // basic normalization
+    vno = vno.toUpperCase();
+
+    if(!vno || !vtype || !owner){
       throw new Error("සියලු ක්ෂේත්‍ර පුරවන්න");
     }
+    if(!Number.isFinite(cap) || cap <= 0){
+      throw new Error("Capacity නිවැරදි අංකයක් විය යුතුයි");
+    }
+    if(routes.length === 0){
+      throw new Error("අවම වශයෙන් රූට් එකක් තෝරන්න");
+    }
+
     const payload = { vehicle_no: vno, vehicle_type: vtype, capacity: cap, owner_name: owner, route_ids: routes };
+
     if(EDIT_VEH_ID){
       await api(`/ta/vehicles/${EDIT_VEH_ID}`, { method:"PATCH", body: JSON.stringify(payload) });
       toast("✅ Vehicle updated");
@@ -259,10 +271,14 @@ async function saveVehicle(){
       await api("/ta/vehicles", { method:"POST", body: JSON.stringify(payload) });
       toast("✅ Vehicle created");
     }
+
     clearVehicleForm();
     await loadVehicles();
-  }catch(e){ toast("❌ " + e.message); }
+  }catch(e){
+    toast("❌ " + (e?.message || String(e)));
+  }
 }
+
 
 async function loadRequests(){
   const d = await api("/ta/requests/approved");
