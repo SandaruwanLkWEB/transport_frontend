@@ -43,7 +43,29 @@ async function api(path, options = {}) {
     throw new Error("නැවත ඇතුල් වන්න.");
   }
 
-  if (!res.ok) throw new Error(data.error || data.message || `HTTP ${res.status}`);
+  if (!res.ok){
+    let msg = (data && (data.error || data.message || data.raw)) || "";
+    if (typeof msg !== "string") {
+      try { msg = JSON.stringify(msg); } catch(e){ msg = String(msg); }
+    }
+    msg = (msg || "").trim();
+
+    // Friendly messages for common statuses
+    if (res.status === 403){
+      msg = msg ? `අවසර නැහැ. ${msg}` : "අවසර නැහැ.";
+    }
+
+    // If backend returns a generic message, add status for debugging
+    const low = msg.toLowerCase();
+    const isGeneric = !msg || low === "server error" || low === "internal server error" || low === "error";
+    if (isGeneric){
+      msg = `Server error (HTTP ${res.status}). Railway logs බලන්න.`;
+    } else if (!/\(HTTP \d+\)/.test(msg)){
+      msg = `${msg} (HTTP ${res.status})`;
+    }
+
+    throw new Error(msg);
+  }
   return data;
 }
 
