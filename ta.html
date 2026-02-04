@@ -102,7 +102,7 @@
         <label>Select Request (Admin අනුමත කරන්න)</label>
         <select id="reqSelect" onchange="selectRequest()"></select>
         <div class="mini" style="margin-top:6px;">
-          Request එක select කරලා groups load වෙනවා. Group එකට වාහන 1ක් හෝ වැඩි ගණනක් දාන්න පුළුවන්.
+          Request එක select කරලා routes load වෙනවා. එක් route එකකට වාහන කීයක් හෝ එකතු කරන්න පුළුවන්.
           <br/>
           💡 <strong>ඕනෑම වාහනයක් ඕනෑම රූට් එකකට දාන්න පුළුවන්.</strong> ⭐ සලකුණ කර ඇති වාහන සාමාන්‍යයෙන් එම රූට් එකේ යන වාහන (යොමු සඳහා පමණි).
         </div>
@@ -153,19 +153,9 @@ let VEH=[];
 let REQS=[];
 let CURRENT_REQ=null;
 let GROUPS=[];
-let ASSIGN=[]; // flat list
+let ASSIGN=[]; // flat list of assignments per route
 
 let EDIT_VEH_ID = null;
-
-function escapeHTML(s){
-  return String(s ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#39;");
-}
-
 
 function setTab(tab){
   const tabs = ["vehicles","assign","reports"];
@@ -178,10 +168,6 @@ function setTab(tab){
 function routeName(id){
   const r = ROUTE_TREE?.routes?.find(x => String(x.id)===String(id));
   return r ? `${r.route_no} - ${r.route_name}` : "";
-}
-function subName(id){
-  const s = ROUTE_TREE?.sub_routes?.find(x => String(x.id)===String(id));
-  return s ? s.sub_name : "";
 }
 
 async function guard(){
@@ -281,7 +267,6 @@ async function saveVehicle(){
 async function loadRequests(){
   const d = await api("/ta/requests/approved");
   REQS = d.requests || [];
-  // build select
   let html = '<option value="">-- Select --</option>';
   for(const r of REQS){
     html += `<option value="${r.id}">#${r.id} | ${fmtDate(r.request_date)} ${fmtTime(r.request_time)} | ${r.department_name} | ${r.status}</option>`;
@@ -301,39 +286,33 @@ async function reloadCurrent(){
     if(!CURRENT_REQ) return;
     const req = REQS.find(x=>x.id===CURRENT_REQ);
     qs("reqMeta").innerHTML = req ? `Selected: <strong>#${req.id}</strong> | ${fmtDate(req.request_date)} ${fmtTime(req.request_time)} | Dept: ${req.department_name} | Status: ${statusBadge(req.status)}` : "";
+    
+    // Get ROUTE-ONLY groups (no sub-routes)
     const g = await api(`/ta/requests/${CURRENT_REQ}/groups`);
     GROUPS = g.groups || [];
+    
+    // Get existing assignments
     const a = await api(`/ta/requests/${CURRENT_REQ}/assignments`);
     ASSIGN = a.assignments || [];
+    
     renderGroups();
   }catch(e){ toast("❌ " + e.message); }
 }
 
+// Show ALL vehicles - TA decides which goes where
 function vehicleOptionsForRoute(route_id, selectedVehicleId){
-  // ✅ Show ALL vehicles - TA has full flexibility to assign any vehicle to any route
-  // ⭐ indicates vehicles that usually serve this route (for reference only)
   let html = '<option value="">-- වාහනය තෝරන්න --</option>';
   for(const v of VEH){
     const sel = String(v.id)===String(selectedVehicleId) ? "selected" : "";
-    
-    // Check if this vehicle usually serves the current route
     const routeIds = (v.route_ids || []).map(x=>String(x));
     const usualRoute = (route_id && routeIds.includes(String(route_id))) ? "⭐ " : "";
-    
-    html += `<option value="${v.id}" ${sel}>${usualRoute}${v.vehicle_no} (ධාරිතාව ${v.capacity})</option>`;
+    html += `<option value="${v.id}" ${sel}>${usualRoute}${v.vehicle_no} (Cap: ${v.capacity})</option>`;
   }
   return html;
 }
 
-function groupKey(route_id, sub_route_id){
-  return `${route_id ?? "null"}_${sub_route_id ?? "null"}`;
-}
-
-function assignmentsForGroup(route_id, sub_route_id){
-  return ASSIGN.filter(x =>
-    String(x.route_id) === String(route_id) &&
-    String(x.sub_route_id) === String(sub_route_id)
-  );
+function assignmentsForRoute(route_id){
+  return ASSIGN.filter(x => String(x.route_id) === String(route_id));
 }
 
 function capacityForAssignments(as){
@@ -341,56 +320,33 @@ function capacityForAssignments(as){
   for(const a of as){
     const v = VEH.find(x=>String(x.id)===String(a.vehicle_id));
     sum += v ? Number(v.capacity) : Number(a.capacity || 0);
+    sum += Number(a.overbook_amount || 0);
   }
   return sum;
 }
 
 function renderGroups(){
-  if(GROUPS.length===0){
-    qs("groupsBox").innerHTML = "<span class='badge warn'>⚠️ No groups</span>";
-    return;
-  }
-
-  // ✅ Group everything by MAIN route (not by sub-route cards)
-  const byRoute = new Map();
-  for(const g of GROUPS){
-    const rid = g.route_id ?? null;
-    if(!byRoute.has(String(rid))){
-      byRoute.set(String(rid), { route_id: rid, headcount: 0, subs: [] });
-    }
-    const obj = byRoute.get(String(rid));
-    obj.headcount += Number(g.headcount || 0);
-    obj.subs.push({ sub_route_id: g.sub_route_id ?? null, headcount: Number(g.headcount || 0) });
+  if(GROUPS.length===0){ 
+    qs("groupsBox").innerHTML = "<span class='badge warn'>⚠️ No routes found</span>"; 
+    return; 
   }
 
   let html = "";
-  for(const rg of byRoute.values()){
-    const rid = rg.route_id;
-    const routeText = rid ? routeName(rid) : "(No Route)";
-    const routeKey = `r_${rid ?? "null"}`;
+  for(const g of GROUPS){
+    const routeText = g.route_id ? routeName(g.route_id) : "(No Route)";
+    const current = assignmentsForRoute(g.route_id).map(x => ({...x}));
+    const cap = capacityForAssignments(current);
+    const remain = g.headcount - cap;
 
-    // Flatten assignments across all sub-routes under this route
-    let flat = [];
-    for(const s of rg.subs){
-      const cur = assignmentsForGroup(rid, s.sub_route_id).map(x => ({...x, _sub_route_id: s.sub_route_id}));
-      if(cur.length) flat.push(...cur);
-    }
-
-    // If nothing yet, show one empty row (with a sub-route selector)
-    if(flat.length===0){
-      const defaultSub = rg.subs.length ? (rg.subs[0].sub_route_id ?? null) : null;
-      flat = [{ vehicle_id:"", driver_name:"", driver_phone:"", instructions:"", overbook_amount:0, overbook_reason:"", _sub_route_id: defaultSub }];
-    }
-
-    const cap = capacityForAssignments(flat);
-    const remain = rg.headcount - cap;
     const badge = remain <= 0 ? "<span class='badge good'>✅ ධාරිතාව හරි</span>" : "<span class='badge bad'>⚠️ ධාරිතාව අඩුයි</span>";
 
     html += `<div class="card" style="background:#fff; border:1px solid var(--border); margin-bottom:14px;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:12px;">
         <div>
           <div style="font-weight:700; font-size:15px;">${routeText}</div>
-          <div class="mini" style="margin-top:4px;">මුළු සේවක ගණන: <strong>${rg.headcount}</strong> | මුළු ධාරිතාව: <strong>${cap}</strong> | අඩුයි: <strong>${Math.max(remain,0)}</strong></div>
+          <div class="mini" style="margin-top:4px;">
+            සේවක ගණන: <strong>${g.headcount}</strong> | දැනට ධාරිතාව: <strong>${cap}</strong> | අඩුයි: <strong>${Math.max(remain,0)}</strong>
+          </div>
         </div>
         <div>${badge}</div>
       </div>
@@ -400,205 +356,65 @@ function renderGroups(){
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Sub-route</th><th>වාහනය</th><th>රියදුරු නම</th><th>දුරකථනය</th><th>උපදෙස්</th><th>ඔවරයිඩ් (+)</th><th>හේතුව</th><th></th></tr>
+            <tr>
+              <th>වාහනය</th>
+              <th>රියදුරු නම</th>
+              <th>දුරකථනය</th>
+              <th>උපදෙස්</th>
+              <th>ඔවරයිඩ් (+)</th>
+              <th>හේතුව</th>
+              <th></th>
+            </tr>
           </thead>
-          <tbody>
-            ${renderAssignRowsRoute(routeKey, rid, rg.subs, flat)}
+          <tbody id="assign_rows_${g.route_id}">
+            ${renderAssignRows(g.route_id, current)}
           </tbody>
         </table>
       </div>
 
       <div class="btnrow" style="margin-top:12px;">
-        <button class="btn small ghost" onclick="addAssignRowRoute('${routeKey}', ${rid ?? "null"})">➕ වාහනයක් එක් කරන්න</button>
-        <button class="btn small btn-primary" onclick="saveRoute(${rid ?? "null"})">💾 කණ්ඩායම සුරකින්න</button>
+        <button class="btn small ghost" onclick="addAssignRow(${g.route_id})">➕ වාහනයක් එක් කරන්න</button>
+        <button class="btn small btn-primary" onclick="saveRoute(${g.route_id})">💾 රූට් සුරකින්න</button>
       </div>
     </div>`;
   }
-
   qs("groupsBox").innerHTML = html;
 }
 
-function subRouteOptions(subs, selectedId){
-  let html = '<option value="">-- Sub-route --</option>';
-  for(const s of subs){
-    const sid = s.sub_route_id ?? null;
-    const name = sid ? subName(sid) : "(No Sub-route)";
-    const sel = String(selectedId ?? "") === String(sid ?? "") ? "selected" : "";
-    html += `<option value="${sid ?? ""}" ${sel}>${name}</option>`;
+function renderAssignRows(route_id, current){
+  if(current.length===0) {
+    current = [{ vehicle_id:"", driver_name:"", driver_phone:"", instructions:"", overbook_amount:0, overbook_reason:"" }];
   }
-  return html;
-}
-
-function renderAssignRowsRoute(routeKey, route_id, subs, current){
-  // current is flat array, each item MUST have _sub_route_id
+  
   let rows = "";
   current.forEach((a, idx)=>{
     const vid = a.vehicle_id || "";
     const vOpt = vehicleOptionsForRoute(route_id, vid);
-    const srOpt = subRouteOptions(subs, a._sub_route_id ?? "");
-    rows += `<tr>
-      <td>
-        <select id="gs_${routeKey}_${idx}" style="min-width:140px;">${srOpt}</select>
-      </td>
-      <td>
-        <select id="gv_${routeKey}_${idx}" style="min-width:180px;">${vOpt}</select>
-      </td>
-      <td><input id="gn_${routeKey}_${idx}" value="${escapeHTML(a.driver_name||"")}" placeholder="Name"/></td>
-      <td><input id="gp_${routeKey}_${idx}" value="${escapeHTML(a.driver_phone||"")}" placeholder="Phone"/></td>
-      <td><input id="gi_${routeKey}_${idx}" value="${escapeHTML(a.instructions||"")}" placeholder="Instructions"/></td>
-      <td style="width:100px;"><input id="go_${routeKey}_${idx}" type="number" min="0" value="${Number(a.overbook_amount||0)}" /></td>
-      <td><input id="gr_${routeKey}_${idx}" value="${escapeHTML(a.overbook_reason||"")}" placeholder="Reason"/></td>
-      <td style="width:60px;"><button class="btn small ghost" onclick="removeRow('${routeKey}', ${idx})">✖</button></td>
-    </tr>`;
-  });
-  return rows;
-}
-
-function removeRow(routeKey, idx){
-  // remove by clearing vehicle (row will be ignored on save) + hide row
-  const tr = qs(`gv_${routeKey}_${idx}`)?.closest("tr");
-  if(tr) tr.style.display = "none";
-  const v = qs(`gv_${routeKey}_${idx}`); if(v) v.value = "";
-}
-
-function addAssignRowRoute(routeKey, route_id){
-  // Re-render by appending one empty row and rebuilding table body
-  // Collect existing visible rows into a temp array
-  const tbody = qs("groupsBox").querySelector(`select[id^="gv_${routeKey}_"]`)?.closest("table")?.querySelector("tbody");
-  if(!tbody){ toast("⚠️ Table not ready"); return; }
-
-  const selects = qsa(`select[id^="gv_${routeKey}_"]`);
-  const rows = [];
-  for(const sel of selects){
-    const parts = sel.id.split("_");
-    const idx = parts[parts.length-1];
-    const tr = sel.closest("tr");
-    if(tr && tr.style.display==="none") continue;
-    rows.push({
-      vehicle_id: qs(`gv_${routeKey}_${idx}`)?.value || "",
-      driver_name: qs(`gn_${routeKey}_${idx}`)?.value || "",
-      driver_phone: qs(`gp_${routeKey}_${idx}`)?.value || "",
-      instructions: qs(`gi_${routeKey}_${idx}`)?.value || "",
-      overbook_amount: qs(`go_${routeKey}_${idx}`)?.value || 0,
-      overbook_reason: qs(`gr_${routeKey}_${idx}`)?.value || "",
-      _sub_route_id: qs(`gs_${routeKey}_${idx}`)?.value || ""
-    });
-  }
-
-  // default sub-route = first option if exists
-  const subSel = qs(`gs_${routeKey}_0`);
-  const defaultSub = subSel ? (subSel.options.length>1 ? subSel.options[1].value : "") : "";
-  rows.push({ vehicle_id:"", driver_name:"", driver_phone:"", instructions:"", overbook_amount:0, overbook_reason:"", _sub_route_id: defaultSub });
-
-  // Need subs list again: infer from first sub select options
-  const subs = [];
-  if(subSel){
-    for(const opt of subSel.options){
-      if(opt.value==="") continue;
-      subs.push({ sub_route_id: opt.value });
-    }
-  }
-
-  tbody.innerHTML = renderAssignRowsRoute(routeKey, route_id, subs, rows);
-}
-
-async function saveRoute(route_id){
-  try{
-    // Find all groups for this route
-    const subs = GROUPS.filter(x => String(x.route_id)===String(route_id))
-                      .map(x => x.sub_route_id ?? null);
-
-    const routeKey = `r_${route_id ?? "null"}`;
-    const selects = qsa(`select[id^="gv_${routeKey}_"]`);
-    const bySub = new Map();
-
-    for(const sel of selects){
-      const parts = sel.id.split("_");
-      const idx = parts[parts.length-1];
-      const tr = sel.closest("tr");
-      if(tr && tr.style.display==="none") continue;
-
-      const vehicleVal = qs(`gv_${routeKey}_${idx}`)?.value;
-      const vehicle_id = vehicleVal ? parseInt(vehicleVal,10) : null;
-      if(!vehicle_id) continue;
-
-      const subVal = qs(`gs_${routeKey}_${idx}`)?.value;
-      const sub_route_id = (subVal==="" || subVal==null) ? null : parseInt(subVal,10);
-
-      // If route has sub routes, enforce choose one
-      if(subs.length>0 && sub_route_id===null){
-        throw new Error("Sub-route එකක් තෝරන්න");
-      }
-
-      const a = {
-        vehicle_id,
-        driver_name: qs(`gn_${routeKey}_${idx}`).value.trim(),
-        driver_phone: qs(`gp_${routeKey}_${idx}`).value.trim(),
-        instructions: qs(`gi_${routeKey}_${idx}`).value.trim(),
-        overbook_amount: parseInt(qs(`go_${routeKey}_${idx}`).value || "0",10) || 0,
-        overbook_reason: qs(`gr_${routeKey}_${idx}`).value.trim()
-      };
-
-      const k = String(sub_route_id ?? "");
-      if(!bySub.has(k)) bySub.set(k, []);
-      bySub.get(k).push(a);
-    }
-
-    // Validate at least one vehicle
-    let total = 0;
-    for(const arr of bySub.values()) total += arr.length;
-    if(total===0) throw new Error("අවම වශයෙන් වාහනයක් එක් කරන්න");
-
-    // Save per sub-route (backend expects route_id + sub_route_id)
-    for(const [k, assignments] of bySub.entries()){
-      const sub_route_id = (k==="" ? null : parseInt(k,10));
-      await api(`/ta/requests/${CURRENT_REQ}/assignments`, {
-        method:"POST",
-        body: JSON.stringify({ route_id, sub_route_id, assignments })
-      });
-    }
-
-    toast("✅ කණ්ඩායම සුරකින ලදී");
-    await reloadCurrent();
-  }catch(e){
-    toast("❌ " + e.message);
-  }
-}
-
-function renderAssignRows(key, route_id, sub_route_id, current){
-  // if empty, show one blank row
-  if(current.length===0) current = [{ vehicle_id:"", driver_name:"", driver_phone:"", instructions:"", overbook_amount:0, overbook_reason:"" }];
-  let rows = "";
-  current.forEach((a, idx)=>{
-    const vid = a.vehicle_id || "";
-    const vOpt = vehicleOptionsForRoute(route_id, vid);
-    rows += `<tr>
+    rows += `<tr id="row_${route_id}_${idx}">
       <td style="min-width:220px;">
-        <select id="gv_${key}_${idx}">${vOpt}</select>
+        <select class="v_sel" data-route="${route_id}" data-idx="${idx}">${vOpt}</select>
       </td>
-      <td><input id="gn_${key}_${idx}" value="${(a.driver_name||"").replace(/"/g,'&quot;')}" placeholder="රියදුරු නම" /></td>
-      <td><input id="gp_${key}_${idx}" value="${(a.driver_phone||"").replace(/"/g,'&quot;')}" placeholder="07X..." /></td>
-      <td><input id="gi_${key}_${idx}" value="${(a.instructions||"").replace(/"/g,'&quot;')}" placeholder="උපදෙස්" /></td>
-      <td style="width:110px;"><input id="go_${key}_${idx}" type="number" min="0" max="2" value="${a.overbook_amount || 0}" /></td>
-      <td><input id="gr_${key}_${idx}" value="${(a.overbook_reason||"").replace(/"/g,'&quot;')}" placeholder="(+1/+2 නම් හේතුව)" /></td>
-      <td><button class="btn small ghost" onclick="removeAssignRow('${key}', ${route_id ?? "null"}, ${sub_route_id ?? "null"}, ${idx})">🗑️ Remove</button></td>
+      <td><input class="v_name" data-route="${route_id}" data-idx="${idx}" value="${(a.driver_name||"").replace(/"/g,'&quot;')}" placeholder="රියදුරු නම" /></td>
+      <td><input class="v_phone" data-route="${route_id}" data-idx="${idx}" value="${(a.driver_phone||"").replace(/"/g,'&quot;')}" placeholder="07X..." /></td>
+      <td><input class="v_inst" data-route="${route_id}" data-idx="${idx}" value="${(a.instructions||"").replace(/"/g,'&quot;')}" placeholder="උපදෙස්" /></td>
+      <td style="width:110px;"><input class="v_over" data-route="${route_id}" data-idx="${idx}" type="number" min="0" max="2" value="${a.overbook_amount || 0}" /></td>
+      <td><input class="v_reason" data-route="${route_id}" data-idx="${idx}" value="${(a.overbook_reason||"").replace(/"/g,'&quot;')}" placeholder="(+1/+2 හේතුව)" /></td>
+      <td><button class="btn small ghost" onclick="removeAssignRow(${route_id}, ${idx})">🗑️</button></td>
     </tr>`;
   });
   return rows;
 }
 
-function addAssignRow(key, route_id, sub_route_id){
-  // add a blank assignment for this group in ASSIGN temp, then re-render
-  ASSIGN.push({ route_id, sub_route_id, vehicle_id:"", driver_name:"", driver_phone:"", instructions:"", overbook_amount:0, overbook_reason:"" });
+function addAssignRow(route_id){
+  ASSIGN.push({ route_id, vehicle_id:"", driver_name:"", driver_phone:"", instructions:"", overbook_amount:0, overbook_reason:"" });
   renderGroups();
 }
 
-function removeAssignRow(key, route_id, sub_route_id, idx){
-  const list = assignmentsForGroup(route_id, sub_route_id);
-  // remove idx-th item in that list from ASSIGN (by matching order)
+function removeAssignRow(route_id, idx){
+  const list = assignmentsForRoute(route_id);
   let seen = 0;
   for(let i=0;i<ASSIGN.length;i++){
-    if(String(ASSIGN[i].route_id)===String(route_id) && String(ASSIGN[i].sub_route_id)===String(sub_route_id)){
+    if(String(ASSIGN[i].route_id)===String(route_id)){
       if(seen===idx){
         ASSIGN.splice(i,1);
         break;
@@ -609,27 +425,33 @@ function removeAssignRow(key, route_id, sub_route_id, idx){
   renderGroups();
 }
 
-async function saveGroup(route_id, sub_route_id){
+async function saveRoute(route_id){
   try{
-    const g = GROUPS.find(x => String(x.route_id)===String(route_id) && String(x.sub_route_id)===String(sub_route_id));
-    if(!g) throw new Error("කණ්ඩායම හමු නොවීය");
+    const g = GROUPS.find(x => String(x.route_id)===String(route_id));
+    if(!g) throw new Error("රූට් හමු නොවීය");
 
-    const key = groupKey(route_id, sub_route_id);
-    // Determine current row count by scanning select ids
-    const selects = qsa(`select[id^="gv_${key}_"]`);
+    // Collect all assignments for this route from the form
+    const selects = qsa(`select.v_sel[data-route="${route_id}"]`);
     const assignments = [];
+    
     for(const sel of selects){
-      const parts = sel.id.split("_");
-      const idx = parts[parts.length-1];
-      const vehicle_id = qs(`gv_${key}_${idx}`).value ? parseInt(qs(`gv_${key}_${idx}`).value,10) : null;
-      if(!vehicle_id) continue; // ignore empty rows
+      const idx = sel.dataset.idx;
+      const vehicle_id = qsa(`select.v_sel[data-route="${route_id}"][data-idx="${idx}"]`)[0]?.value;
+      if(!vehicle_id) continue; // skip empty rows
+      
+      const driver_name = qsa(`input.v_name[data-route="${route_id}"][data-idx="${idx}"]`)[0]?.value.trim() || "";
+      const driver_phone = qsa(`input.v_phone[data-route="${route_id}"][data-idx="${idx}"]`)[0]?.value.trim() || "";
+      const instructions = qsa(`input.v_inst[data-route="${route_id}"][data-idx="${idx}"]`)[0]?.value.trim() || "";
+      const overbook_amount = parseInt(qsa(`input.v_over[data-route="${route_id}"][data-idx="${idx}"]`)[0]?.value || "0",10) || 0;
+      const overbook_reason = qsa(`input.v_reason[data-route="${route_id}"][data-idx="${idx}"]`)[0]?.value.trim() || "";
+      
       assignments.push({
-        vehicle_id,
-        driver_name: qs(`gn_${key}_${idx}`).value.trim(),
-        driver_phone: qs(`gp_${key}_${idx}`).value.trim(),
-        instructions: qs(`gi_${key}_${idx}`).value.trim(),
-        overbook_amount: parseInt(qs(`go_${key}_${idx}`).value || "0",10) || 0,
-        overbook_reason: qs(`gr_${key}_${idx}`).value.trim()
+        vehicle_id: parseInt(vehicle_id,10),
+        driver_name,
+        driver_phone,
+        instructions,
+        overbook_amount,
+        overbook_reason
       });
     }
 
@@ -637,10 +459,10 @@ async function saveGroup(route_id, sub_route_id){
 
     await api(`/ta/requests/${CURRENT_REQ}/assignments`, {
       method:"POST",
-      body: JSON.stringify({ route_id, sub_route_id, assignments })
+      body: JSON.stringify({ route_id, assignments })
     });
 
-    toast("✅ කණ්ඩායම සුරකින ලදී");
+    toast("✅ රූට් සුරකින ලදී");
     await reloadCurrent();
   }catch(e){ toast("❌ " + e.message); }
 }
@@ -666,6 +488,7 @@ function downloadVehicleReport(){
   if(!d){ toast("⚠️ දිනය තෝරන්න"); return; }
   window.open(`${API_BASE_URL || ''}/reports/daily/vehicle?date=${encodeURIComponent(d)}`, "_blank");
 }
+
 (async function init(){
   try{
     await guard();
