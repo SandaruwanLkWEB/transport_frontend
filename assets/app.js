@@ -43,29 +43,7 @@ async function api(path, options = {}) {
     throw new Error("නැවත ඇතුල් වන්න.");
   }
 
-  if (!res.ok){
-    let msg = (data && (data.error || data.message || data.raw)) || "";
-    if (typeof msg !== "string") {
-      try { msg = JSON.stringify(msg); } catch(e){ msg = String(msg); }
-    }
-    msg = (msg || "").trim();
-
-    // Friendly messages for common statuses
-    if (res.status === 403){
-      msg = msg ? `අවසර නැහැ. ${msg}` : "අවසර නැහැ.";
-    }
-
-    // If backend returns a generic message, add status for debugging
-    const low = msg.toLowerCase();
-    const isGeneric = !msg || low === "server error" || low === "internal server error" || low === "error";
-    if (isGeneric){
-      msg = `Server error (HTTP ${res.status}). Railway logs බලන්න.`;
-    } else if (!/\(HTTP \d+\)/.test(msg)){
-      msg = `${msg} (HTTP ${res.status})`;
-    }
-
-    throw new Error(msg);
-  }
+  if (!res.ok) throw new Error(data.error || data.message || `HTTP ${res.status}`);
   return data;
 }
 
@@ -200,4 +178,75 @@ async function rejectHodReg(id){
 // ---- Admin: Bulk sub-routes (grams) ----
 async function bulkUpsertSubs(routeId, lines){
   return api(`/admin/routes/${routeId}/subroutes/bulk`, { method:"POST", body: JSON.stringify({ lines }) });
+}
+
+// ---- PDF Download with Authentication ----
+async function downloadPdfWithAuth(url, filename) {
+  try {
+    const token = getToken();
+    
+    if (!token) {
+      toast("⚠️ Authentication required. Please login again.");
+      setTimeout(() => location.href = "login.html", 1500);
+      return;
+    }
+
+    toast("⏳ බාගත කරමින්... කරුණාකර රැඳී සිටින්න");
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/pdf'
+      }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = "Report download failed";
+      
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.message || errorJson.error || errorMessage;
+      } catch (e) {
+        if (errorText.includes("404")) {
+          errorMessage = "Report not found. Make sure request is HR approved and vehicles assigned.";
+        } else if (errorText.includes("400")) {
+          errorMessage = "Invalid date or request not ready for reports.";
+        } else if (errorText.includes("401")) {
+          errorMessage = "Authentication failed. Please login again.";
+        } else {
+          errorMessage = `Error: ${response.status} - ${errorText.substring(0, 100)}`;
+        }
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const blob = await response.blob();
+    
+    if (blob.size === 0) {
+      throw new Error("Downloaded file is empty. Report may not have data.");
+    }
+
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = downloadUrl;
+    a.download = filename;
+    
+    document.body.appendChild(a);
+    a.click();
+    
+    setTimeout(() => {
+      window.URL.revokeObjectURL(downloadUrl);
+      document.body.removeChild(a);
+    }, 100);
+
+    toast("✅ බාගත කරන ලදී!");
+
+  } catch (error) {
+    console.error('PDF download error:', error);
+    toast("❌ " + error.message);
+  }
 }
