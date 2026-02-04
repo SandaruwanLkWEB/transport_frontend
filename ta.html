@@ -1,38 +1,46 @@
 <!doctype html>
-<html>
+<html lang="si">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ප්‍රවාහන අධිකාරිය</title>
+  <meta name="theme-color" content="#E11D48" />
+  <title>Transport Authority Dashboard - Transport Management</title>
   <link rel="stylesheet" href="assets/styles.css" />
   <script src="assets/config.js"></script>
   <script src="assets/app.js"></script>
 </head>
 <body>
+
+<!-- Glassmorphic Header -->
 <header>
-  <h1>ප්‍රවාහන අධිකාරිය</h1>
+  <h1>🚗 Transport Authority Panel</h1>
   <div style="display:flex; gap:8px; align-items:center;">
-    <a href="index.html">මුල් පිටුව</a>
+    <a href="index.html" class="btn ghost small">🏠 මුල් පිටුව</a>
     <button class="btn secondary small" onclick="logout()">ඉවත් වන්න</button>
   </div>
 </header>
 
-<div class="container">
-  <div class="card" id="meBox"></div>
+<main class="container">
+  <!-- User Info Card -->
+  <div class="card elevated" id="meBox" style="margin-bottom:16px; padding:12px 18px;">
+    <span style="color: var(--muted);">Loading...</span>
+  </div>
 
-  <div class="card">
+  <!-- Tab Navigation -->
+  <div class="card" style="margin-bottom:14px;">
     <div class="tabs">
-      <button class="btn active" id="tabVehicles" onclick="setTab('vehicles')">වාහන</button>
-      <button class="btn" id="tabAssign" onclick="setTab('assign')">අනයුක්තිය</button>
-      <button class="btn" id="tabReports" onclick="setTab('reports')">වාර්තා</button>
+      <button class="btn active" id="tabVehicles" onclick="setTab('vehicles')">🚌 වාහන</button>
+      <button class="btn" id="tabAssign" onclick="setTab('assign')">📋 අනයුක්තිය</button>
+      <button class="btn" id="tabReports" onclick="setTab('reports')">📊 වාර්තා</button>
     </div>
   </div>
 
   <!-- වාහන -->
-  <div class="card" id="pane_vehicles">
-    <h2 style="margin:0 0 10px;">Vehicle Management</h2>
+  <div class="card soft" id="pane_vehicles">
+    <h2 class="h2">🚌 Vehicle Management</h2>
+    <hr/>
 
-    <div class="row">
+    <div class="grid two" style="margin-top:14px;">
       <div>
         <label>Vehicle No (UNIQUE)</label>
         <input id="vNo" placeholder="NC-1234" />
@@ -47,7 +55,7 @@
       </div>
     </div>
 
-    <div class="row">
+    <div class="grid two" style="margin-top:12px;">
       <div>
         <label>Capacity</label>
         <input id="vCap" type="number" min="1" placeholder="12" />
@@ -58,75 +66,82 @@
       </div>
     </div>
 
-    <div class="card" style="background:#fff; border:1px solid var(--line);">
-      <div class="small" style="margin-bottom:6px;">රූට් this vehicle can serve</div>
+    <div class="card" style="background:#fff; border:1px solid var(--border); margin-top:14px;">
+      <div class="mini" style="margin-bottom:8px; font-weight:600;">🛣️ රූට් this vehicle can serve</div>
       <div id="routeChecks" class="small"></div>
     </div>
 
-    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-      <button class="btn" onclick="saveVehicle()">Save Vehicle</button>
-      <button class="btn ghost" onclick="clearVehicleForm()">Clear</button>
-      <button class="btn ghost" onclick="loadVehicles()">Refresh</button>
+    <div class="btnrow" style="margin-top:14px;">
+      <button class="btn btn-primary" onclick="saveVehicle()">💾 Save Vehicle</button>
+      <button class="btn ghost" onclick="clearVehicleForm()">🔄 Clear</button>
+      <button class="btn ghost" onclick="loadVehicles()">🔃 Refresh</button>
     </div>
 
-    <div class="hr"></div>
+    <hr style="margin:20px 0;"/>
 
-    <div class="row">
+    <div class="grid two" style="margin-bottom:14px;">
       <div>
-        <label>සෙවීම</label>
+        <label>🔍 සෙවීම</label>
         <input id="vehSearch" placeholder="vehicle no..." oninput="renderVehicles()" />
       </div>
       <div></div>
     </div>
 
-    <div id="vehList"></div>
+    <div class="table-wrap">
+      <div id="vehList"></div>
+    </div>
   </div>
 
   <!-- Assignments -->
-  <div class="card" id="pane_assign" style="display:none;">
-    <h2 style="margin:0 0 10px;">Assign වාහන to රූට්</h2>
+  <div class="card soft" id="pane_assign" style="display:none;">
+    <h2 class="h2">📋 Assign වාහන to රූට්</h2>
+    <hr/>
 
-    <div class="row">
+    <div class="grid two" style="margin-top:14px;">
       <div>
         <label>Select Request (Admin අනුමත කරන්න)</label>
         <select id="reqSelect" onchange="selectRequest()"></select>
-        <div class="small">Request එක select කරලා groups load වෙනවා. Group එකට වාහන 1ක් හෝ වැඩි ගණනක් දාන්න පුළුවන්.</div>
+        <div class="mini" style="margin-top:6px;">Request එක select කරලා groups load වෙනවා. Group එකට වාහන 1ක් හෝ වැඩි ගණනක් දාන්න පුළුවන්.</div>
       </div>
       <div>
         <label>Quick Actions</label>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
-          <button class="btn ghost" onclick="reloadCurrent()">Reload</button>
-          <button class="btn" onclick="submitTA()">Submit TA (Capacity Check)</button>
+        <div class="btnrow" style="margin-top:6px;">
+          <button class="btn ghost" onclick="reloadCurrent()">🔄 Reload</button>
+          <button class="btn btn-primary" onclick="submitTA()">✅ Submit TA (Capacity Check)</button>
         </div>
       </div>
     </div>
 
-    <div id="reqMeta" class="small"></div>
-    <div class="hr"></div>
+    <div id="reqMeta" class="alert" style="margin-top:14px;"></div>
+    <hr/>
     <div id="groupsBox" class="small">Select a request...</div>
   </div>
 
   <!-- Reports -->
-  <div class="card" id="pane_reports" style="display:none;">
-    <h2 style="margin:0 0 10px;">වාර්තා බාගත කිරීම</h2>
-    <div class="small">Reports download කරන්නේ HR Final Approval පස්සේම. Request එක select කරලා download කරන්න.</div>
-    <div class="row">
+  <div class="card soft" id="pane_reports" style="display:none;">
+    <h2 class="h2">📊 වාර්තා බාගත කිරීම</h2>
+    <hr/>
+    <div class="alert info" style="margin-bottom:14px;">
+      Reports download කරන්නේ HR Final Approval පස්සේම. Request එක select කරලා download කරන්න.
+    </div>
+    
+    <div class="grid two">
       <div>
-        <label>දිනය</label>
+        <label>📆 දිනය</label>
         <input id="repDate" type="date" />
       </div>
       <div>
         <label>Actions</label>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
-          <button class="btn" onclick="downloadRouteReport()">Route-wise PDF</button>
-          <button class="btn secondary" onclick="downloadVehicleReport()">Vehicle PDF</button>
+        <div class="btnrow" style="margin-top:6px;">
+          <button class="btn btn-primary" onclick="downloadRouteReport()">📄 Route-wise PDF</button>
+          <button class="btn secondary" onclick="downloadVehicleReport()">📄 Vehicle PDF</button>
         </div>
       </div>
     </div>
-    <p class="small">If your browser blocks downloads, open the URL in new tab.</p>
+    <p class="mini" style="margin-top:10px;">💡 If your browser blocks downloads, open the URL in new tab.</p>
   </div>
 
-</div>
+</main>
 
 <script>
 let ME=null;
@@ -158,7 +173,7 @@ function subName(id){
 async function guard(){
   ME = await guardRole("TA");
   if(!ME) return;
-  qs("meBox").innerHTML = `<b>${ME.role}</b> | ${ME.email}`;
+  qs("meBox").innerHTML = `<strong style="color: var(--brand);">${ME.role}</strong> <span style="color: var(--muted);">|</span> <span style="color: var(--text-secondary);">${ME.email}</span>`;
 }
 
 function renderRouteChecks(selectedIds=[]){
@@ -172,7 +187,7 @@ function renderRouteChecks(selectedIds=[]){
       <span>${r.route_no} - ${r.route_name}</span>
     </label>`;
   }
-  qs("routeChecks").innerHTML = html || "<span class='small'>No routes found (Admin must create routes first)</span>";
+  qs("routeChecks").innerHTML = html || "<span class='mini'>⚠️ No routes found (Admin must create routes first)</span>";
 }
 
 function selectedRouteIds(){
@@ -188,19 +203,19 @@ async function loadVehicles(){
 function renderVehicles(){
   const q = (qs("vehSearch").value||"").toLowerCase();
   const list = VEH.filter(v => (v.vehicle_no||"").toLowerCase().includes(q));
-  let html = "<table><tr><th>No</th><th>Type</th><th>Cap</th><th>Owner</th><th>Routes</th><th>Action</th></tr>";
+  let html = "<table><thead><tr><th>Vehicle No</th><th>Type</th><th>Capacity</th><th>Owner</th><th>Routes</th><th>Action</th></tr></thead><tbody>";
   for(const v of list){
     const rnames = (v.route_ids||[]).map(id => routeName(id)).filter(Boolean).join(", ");
     html += `<tr>
-      <td><b>${v.vehicle_no}</b><br/><span class="small">ID: ${v.id}</span></td>
-      <td>${v.vehicle_type}</td>
+      <td><strong>${v.vehicle_no}</strong><br/><span class="mini">ID: ${v.id}</span></td>
+      <td><span class="badge">${v.vehicle_type}</span></td>
       <td>${v.capacity}</td>
       <td>${v.owner_name}</td>
-      <td class="small">${rnames || "-"}</td>
-      <td><button class="btn small" onclick="editVehicle(${v.id})">Edit</button></td>
+      <td class="mini">${rnames || "-"}</td>
+      <td><button class="btn small" onclick="editVehicle(${v.id})">✏️ Edit</button></td>
     </tr>`;
   }
-  html += "</table>";
+  html += "</tbody></table>";
   qs("vehList").innerHTML = html;
 }
 
@@ -222,37 +237,35 @@ function editVehicle(id){
   qs("vCap").value = v.capacity;
   qs("vOwner").value = v.owner_name;
   renderRouteChecks(v.route_ids||[]);
-  toast("Editing vehicle ID: " + id);
+  toast("✏️ Editing vehicle ID: " + id);
   setTab("vehicles");
 }
 
 async function saveVehicle(){
   try{
-    const body = {
-      vehicle_no: qs("vNo").value.trim(),
-      vehicle_type: qs("vType").value,
-      capacity: parseInt(qs("vCap").value,10),
-      owner_name: qs("vOwner").value.trim(),
-      route_ids: selectedRouteIds()
-    };
-    if(!body.vehicle_no) throw new Error("Vehicle number required");
-    if(!body.owner_name) throw new Error("Owner name required");
-    if(!body.capacity || body.capacity<1) throw new Error("Capacity required");
-
-    if(EDIT_VEH_ID){
-      await api(`/ta/vehicles/${EDIT_VEH_ID}`, {method:"PATCH", body: JSON.stringify(body)});
-      toast("Vehicle updated");
-    }else{
-      await api(`/ta/vehicles`, {method:"POST", body: JSON.stringify(body)});
-      toast("Vehicle created");
+    const vno = qs("vNo").value.trim();
+    const vtype = qs("vType").value;
+    const cap = parseInt(qs("vCap").value,10);
+    const owner = qs("vOwner").value.trim();
+    const routes = selectedRouteIds();
+    if(!vno || !vtype || !cap || !owner){
+      throw new Error("සියලු ක්ෂේත්‍ර පුරවන්න");
     }
-    await loadVehicles();
+    const payload = { vehicle_no: vno, vehicle_type: vtype, capacity: cap, owner_name: owner, route_ids: routes };
+    if(EDIT_VEH_ID){
+      await api(`/ta/vehicles/${EDIT_VEH_ID}`, { method:"PUT", body: JSON.stringify(payload) });
+      toast("✅ Vehicle updated");
+    }else{
+      await api("/ta/vehicles", { method:"POST", body: JSON.stringify(payload) });
+      toast("✅ Vehicle created");
+    }
     clearVehicleForm();
-  }catch(e){ toast(e.message); }
+    await loadVehicles();
+  }catch(e){ toast("❌ " + e.message); }
 }
 
 async function loadRequests(){
-  const d = await api("/ta/requests/approved");
+  const d = await api("/ta/requests");
   REQS = d.requests || [];
   // build select
   let html = '<option value="">-- Select --</option>';
@@ -273,13 +286,13 @@ async function reloadCurrent(){
   try{
     if(!CURRENT_REQ) return;
     const req = REQS.find(x=>x.id===CURRENT_REQ);
-    qs("reqMeta").innerHTML = req ? `Selected: <b>#${req.id}</b> | ${fmtDate(req.request_date)} ${fmtTime(req.request_time)} | Dept: ${req.department_name} | Status: ${statusBadge(req.status)}` : "";
+    qs("reqMeta").innerHTML = req ? `Selected: <strong>#${req.id}</strong> | ${fmtDate(req.request_date)} ${fmtTime(req.request_time)} | Dept: ${req.department_name} | Status: ${statusBadge(req.status)}` : "";
     const g = await api(`/ta/requests/${CURRENT_REQ}/groups`);
     GROUPS = g.groups || [];
     const a = await api(`/ta/requests/${CURRENT_REQ}/assignments`);
     ASSIGN = a.assignments || [];
     renderGroups();
-  }catch(e){ toast(e.message); }
+  }catch(e){ toast("❌ " + e.message); }
 }
 
 function vehicleOptionsForRoute(route_id, selectedVehicleId){
@@ -318,7 +331,7 @@ function capacityForAssignments(as){
 }
 
 function renderGroups(){
-  if(GROUPS.length===0){ qs("groupsBox").innerHTML = "<span class='badge warn'>No groups</span>"; return; }
+  if(GROUPS.length===0){ qs("groupsBox").innerHTML = "<span class='badge warn'>⚠️ No groups</span>"; return; }
 
   let html = "";
   for(const g of GROUPS){
@@ -329,27 +342,33 @@ function renderGroups(){
     const cap = capacityForAssignments(current);
     const remain = g.headcount - cap;
 
-    const badge = remain <= 0 ? "<span class='badge good'>ධාරිතාව හරි</span>" : "<span class='badge bad'>ධාරිතාව අඩුයි</span>";
+    const badge = remain <= 0 ? "<span class='badge good'>✅ ධාරිතාව හරි</span>" : "<span class='badge bad'>⚠️ ධාරිතාව අඩුයි</span>";
 
-    html += `<div class="card" style="background:#fff; border:1px solid var(--line);">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+    html += `<div class="card" style="background:#fff; border:1px solid var(--border); margin-bottom:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:12px;">
         <div>
-          <div style="font-weight:800;">${routeText} ${subText ? " / " + subText : ""}</div>
-          <div class="small">සේවක ගණන: <b>${g.headcount}</b> | දැනට ධාරිතාව: <b>${cap}</b> | අඩුයි: <b>${Math.max(remain,0)}</b></div>
+          <div style="font-weight:700; font-size:15px;">${routeText} ${subText ? " / " + subText : ""}</div>
+          <div class="mini" style="margin-top:4px;">සේවක ගණන: <strong>${g.headcount}</strong> | දැනට ධාරිතාව: <strong>${cap}</strong> | අඩුයි: <strong>${Math.max(remain,0)}</strong></div>
         </div>
         <div>${badge}</div>
       </div>
 
-      <div class="hr"></div>
+      <hr style="margin:12px 0;"/>
 
-      <table>
-        <tr><th>වාහනය</th><th>රියදුරු නම</th><th>දුරකථනය</th><th>උපදෙස්</th><th>ඔවරයිඩ් (+)</th><th>හේතුව</th><th></th></tr>
-        ${renderAssignRows(key, g.route_id, g.sub_route_id, current)}
-      </table>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>වාහනය</th><th>රියදුරු නම</th><th>දුරකථනය</th><th>උපදෙස්</th><th>ඔවරයිඩ් (+)</th><th>හේතුව</th><th></th></tr>
+          </thead>
+          <tbody>
+            ${renderAssignRows(key, g.route_id, g.sub_route_id, current)}
+          </tbody>
+        </table>
+      </div>
 
-      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
-        <button class="btn small" onclick="addAssignRow('${key}', ${g.route_id ?? "null"}, ${g.sub_route_id ?? "null"})">+ වාහනයක් එක් කරන්න</button>
-        <button class="btn small secondary" onclick="saveGroup(${g.route_id ?? "null"}, ${g.sub_route_id ?? "null"})">කණ්ඩායම සුරකින්න</button>
+      <div class="btnrow" style="margin-top:12px;">
+        <button class="btn small ghost" onclick="addAssignRow('${key}', ${g.route_id ?? "null"}, ${g.sub_route_id ?? "null"})">➕ වාහනයක් එක් කරන්න</button>
+        <button class="btn small btn-primary" onclick="saveGroup(${g.route_id ?? "null"}, ${g.sub_route_id ?? "null"})">💾 කණ්ඩායම සුරකින්න</button>
       </div>
     </div>`;
   }
@@ -372,7 +391,7 @@ function renderAssignRows(key, route_id, sub_route_id, current){
       <td><input id="gi_${key}_${idx}" value="${(a.instructions||"").replace(/"/g,'&quot;')}" placeholder="උපදෙස්" /></td>
       <td style="width:110px;"><input id="go_${key}_${idx}" type="number" min="0" max="2" value="${a.overbook_amount || 0}" /></td>
       <td><input id="gr_${key}_${idx}" value="${(a.overbook_reason||"").replace(/"/g,'&quot;')}" placeholder="(+1/+2 නම් හේතුව)" /></td>
-      <td><button class="btn small ghost" onclick="removeAssignRow('${key}', ${route_id ?? "null"}, ${sub_route_id ?? "null"}, ${idx})">Remove</button></td>
+      <td><button class="btn small ghost" onclick="removeAssignRow('${key}', ${route_id ?? "null"}, ${sub_route_id ?? "null"}, ${idx})">🗑️ Remove</button></td>
     </tr>`;
   });
   return rows;
@@ -431,30 +450,30 @@ async function saveGroup(route_id, sub_route_id){
       body: JSON.stringify({ route_id, sub_route_id, assignments })
     });
 
-    toast("කණ්ඩායම සුරකින ලදී");
+    toast("✅ කණ්ඩායම සුරකින ලදී");
     await reloadCurrent();
-  }catch(e){ toast(e.message); }
+  }catch(e){ toast("❌ " + e.message); }
 }
 
 async function submitTA(){
   try{
     if(!CURRENT_REQ) throw new Error("පළමුව ඉල්ලීමක් තෝරන්න");
     await api(`/ta/requests/${CURRENT_REQ}/submit`, {method:"POST"});
-    toast("TA වෙතින් යොමු කළා");
+    toast("✅ TA වෙතින් යොමු කළා");
     await loadRequests();
     await reloadCurrent();
-  }catch(e){ toast(e.message); }
+  }catch(e){ toast("❌ " + e.message); }
 }
 
 // Reports
 function downloadRouteReport(){
   const d = qs("repDate").value;
-  if(!d){ toast("දිනය තෝරන්න"); return; }
+  if(!d){ toast("⚠️ දිනය තෝරන්න"); return; }
   window.open(`${apiBase()}/reports/daily/route-wise?date=${encodeURIComponent(d)}`, "_blank");
 }
 function downloadVehicleReport(){
   const d = qs("repDate").value;
-  if(!d){ toast("දිනය තෝරන්න"); return; }
+  if(!d){ toast("⚠️ දිනය තෝරන්න"); return; }
   window.open(`${apiBase()}/reports/daily/vehicle?date=${encodeURIComponent(d)}`, "_blank");
 }
 (async function init(){
@@ -464,7 +483,7 @@ function downloadVehicleReport(){
     renderRouteChecks([]);
     await loadVehicles();
     await loadRequests();
-  }catch(e){ toast(e.message); }
+  }catch(e){ toast("❌ " + e.message); }
 })();
 
 function todayISO(){
