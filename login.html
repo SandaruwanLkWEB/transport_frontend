@@ -1,51 +1,346 @@
-<!doctype html><html><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>ඇතුල්වීම</title>
-<link rel="stylesheet" href="assets/styles.css"/>
-<script src="assets/config.js"></script>
-<script src="assets/app.js"></script>
-</head><body>
-<div class="topbar"><div class="inner">
-<div class="brand"><span class="dot"></span> ප්‍රවාහන පද්ධතිය</div>
-<div class="nav"><a class="btn" href="register.html">ලියාපදිංචි වන්න</a></div>
-</div></div>
-<div class="container">
-<h1 class="h1">ඇතුල්වීම</h1>
-<div class="grid">
-  <div class="card soft">
-    <h2 class="h2">ඔබගේ ගිණුමට ඇතුල් වන්න</h2>
-    <div id="msg" class="alert error hidden"></div>
-    <label>විද්‍යුත් තැපෑල</label>
-    <input id="email" type="email" placeholder="name@example.com"/>
-    <label>මුරපදය</label>
-    <input id="password" type="password" placeholder="••••••••"/>
-    <div class="toolbar">
-      <div class="btnrow">
-        <button class="btn btn-primary" id="btnLogin">ඇතුල් වන්න</button>
-      </div></div>
+<!doctype html>
+<html lang="si">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="theme-color" content="#E11D48"/>
+  <title>🔐 ඇතුල්වීම - Transport Management</title>
+  <link rel="stylesheet" href="assets/styles.css"/>
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+  <style>
+    /* Enhanced login page styles */
+    .login-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .login-card {
+      width: 100%;
+      max-width: 480px;
+      animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .logo-section {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    
+    .logo-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      border-radius: var(--r-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      box-shadow: var(--glow-brand), var(--shadow-lg);
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+    
+    .logo-title {
+      font-size: 28px;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--text), var(--muted));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+    }
+    
+    .logo-subtitle {
+      color: var(--muted);
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    
+    .input-group {
+      margin-bottom: 18px;
+    }
+    
+    .input-with-icon {
+      position: relative;
+    }
+    
+    .input-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted-2);
+      font-size: 18px;
+      pointer-events: none;
+    }
+    
+    .input-with-icon input {
+      padding-left: 48px;
+    }
+    
+    .remember-forgot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    
+    .remember-me {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    
+    .forgot-link {
+      color: var(--brand);
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+    
+    .forgot-link:hover {
+      opacity: 0.8;
+    }
+    
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 24px 0;
+      color: var(--muted-2);
+      font-size: 14px;
+    }
+    
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .divider span {
+      padding: 0 16px;
+    }
+    
+    .register-prompt {
+      text-align: center;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    
+    .register-link {
+      color: var(--brand);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    
+    .register-link:hover {
+      text-decoration: underline;
+    }
+    
+    @media(max-width: 640px) {
+      .logo-icon {
+        width: 64px;
+        height: 64px;
+        font-size: 32px;
+      }
+      
+      .logo-title {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="inner">
+    <div class="brand">
+      <span class="dot"></span> 
+      ප්‍රවාහන කළමණාකරණ පද්ධතිය
+    </div>
+    <div class="nav">
+      <a class="btn ghost" href="index.html">🏠 Home</a>
+      <a class="btn" href="register.html">ලියාපදිංචි වන්න</a>
+    </div>
   </div>
 </div>
+
+<div class="login-wrapper">
+  <div class="login-card">
+    
+    <!-- Logo Section -->
+    <div class="logo-section">
+      <div class="logo-icon">🚌</div>
+      <h1 class="logo-title">Welcome Back</h1>
+      <p class="logo-subtitle">ඔබගේ ගිණුමට ඇතුල් වන්න</p>
+    </div>
+    
+    <!-- Login Form Card -->
+    <div class="card elevated">
+      
+      <!-- Error Message -->
+      <div id="msg" class="alert error hidden"></div>
+      
+      <!-- Email Input -->
+      <div class="input-group">
+        <label>📧 විද්‍යුත් තැපෑල</label>
+        <div class="input-with-icon">
+          <span class="input-icon">✉️</span>
+          <input 
+            id="email" 
+            type="email" 
+            placeholder="name@example.com"
+            autocomplete="email"
+            autofocus
+          />
+        </div>
+      </div>
+      
+      <!-- Password Input -->
+      <div class="input-group">
+        <label>🔒 මුරපදය</label>
+        <div class="input-with-icon">
+          <span class="input-icon">🔑</span>
+          <input 
+            id="password" 
+            type="password" 
+            placeholder="••••••••"
+            autocomplete="current-password"
+          />
+        </div>
+      </div>
+      
+      <!-- Remember & Forgot -->
+      <div class="remember-forgot">
+        <label class="remember-me">
+          <input type="checkbox" id="remember" />
+          <span>මතක තබා ගන්න</span>
+        </label>
+        <a href="#" class="forgot-link">මුරපදය අමතකද?</a>
+      </div>
+      
+      <!-- Login Button -->
+      <button class="btn btn-primary" id="btnLogin" style="width:100%; justify-content:center; margin-top:8px;">
+        🔓 ඇතුල් වන්න
+      </button>
+      
+      <!-- Divider -->
+      <div class="divider">
+        <span>හෝ</span>
+      </div>
+      
+      <!-- Register Prompt -->
+      <div class="register-prompt">
+        ගිණුමක් නැද්ද? 
+        <a href="register.html" class="register-link">දැන් ලියාපදිංචි වන්න →</a>
+      </div>
+      
+    </div>
+    
+    <!-- Footer Links -->
+    <div style="text-align:center; margin-top:24px; color:var(--muted-2); font-size:13px;">
+      <a href="privacy.html" style="color:inherit; margin:0 12px;">Privacy Policy</a>
+      <a href="data-protection.html" style="color:inherit; margin:0 12px;">Data Protection</a>
+      <a href="about.html" style="color:inherit; margin:0 12px;">About</a>
+    </div>
+    
+  </div>
+</div>
+
 <script>
+// Enter key support
+document.getElementById("email").addEventListener('keypress', (e) => {
+  if(e.key === 'Enter') document.getElementById("password").focus();
+});
+
+document.getElementById("password").addEventListener('keypress', (e) => {
+  if(e.key === 'Enter') document.getElementById("btnLogin").click();
+});
+
+// Login handler
 document.getElementById("btnLogin").onclick = async ()=>{
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
   const msg = document.getElementById("msg");
+  const btn = document.getElementById("btnLogin");
+  
+  // Validation
+  if(!email || !password) {
+    msg.textContent = "⚠️ කරුණාකර සියලු තොරතුරු පුරවන්න";
+    msg.classList.remove("hidden");
+    return;
+  }
+  
   msg.classList.add("hidden");
+  btn.disabled = true;
+  btn.textContent = "⏳ පිවිසෙමින්...";
+  
   try{
-    const d = await api("/auth/login", { method:"POST", body: JSON.stringify({ email, password }) });
+    const d = await api("/auth/login", { 
+      method:"POST", 
+      body: JSON.stringify({ email, password }) 
+    });
+    
     setToken(d.token);
+    
+    // Save remember me preference
+    if(document.getElementById("remember").checked) {
+      localStorage.setItem("rememberedEmail", email);
+    }
+    
     const me = await loadMe();
     const role = me.me && me.me.role;
-    if(role==="ADMIN") location.href="admin.html";
-    else if(role==="HOD") location.href="hod.html";
-    else if(role==="TA") location.href="ta.html";
-    else if(role==="HR") location.href="hr.html";
-    else if(role==="EMP") location.href="emp.html";
-    else location.href="login.html";
+    
+    // Show success
+    toast("✅ සාදරයෙන් පිළිගනිමු!");
+    
+    // Redirect based on role
+    setTimeout(() => {
+      if(role==="ADMIN") location.href="admin.html";
+      else if(role==="HOD") location.href="hod.html";
+      else if(role==="TA") location.href="ta.html";
+      else if(role==="HR") location.href="hr.html";
+      else if(role==="EMP") location.href="emp.html";
+      else location.href="index.html";
+    }, 500);
+    
   }catch(e){
-    msg.textContent = e.message || "අසමත් විය";
+    msg.textContent = "❌ " + (e.message || "ඇතුල් වීම අසාර්ථකයි. කරුණාකර නැවත උත්සාහ කරන්න.");
     msg.classList.remove("hidden");
+    btn.disabled = false;
+    btn.textContent = "🔓 ඇතුල් වන්න";
   }
 };
+
+// Load remembered email
+window.addEventListener('DOMContentLoaded', () => {
+  const remembered = localStorage.getItem("rememberedEmail");
+  if(remembered) {
+    document.getElementById("email").value = remembered;
+    document.getElementById("remember").checked = true;
+    document.getElementById("password").focus();
+  }
+});
 </script>
-</body></html>
+
+</body>
+</html>
