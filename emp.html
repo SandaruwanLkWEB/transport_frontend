@@ -1,102 +1,277 @@
 <!doctype html>
-<html>
+<html lang="si">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>අද ප්‍රවාහන තොරතුරු</title>
-  <link rel="stylesheet" href="assets/styles.css" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="theme-color" content="#E11D48"/>
+  <title>👤 සේවක ලියාපදිංචි වීම</title>
+  <link rel="stylesheet" href="assets/styles.css"/>
   <script src="assets/config.js"></script>
   <script src="assets/app.js"></script>
+  <style>
+    .form-section {
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 <body>
-<header>
-  <h1>අද ප්‍රවාහන තොරතුරු</h1>
-  <div style="display:flex; gap:8px; align-items:center;">
-    <a href="index.html">මුල් පිටුව</a>
-    <button class="btn secondary small" onclick="logout()">ඉවත් වන්න</button>
+
+<div class="topbar">
+  <div class="inner">
+    <div class="brand">
+      <span class="dot"></span> 
+      ප්‍රවාහන කළමණාකරණ පද්ධතිය
+    </div>
+    <div class="nav">
+      <a class="btn ghost" href="login.html">🔓 ඇතුල්වීම</a>
+      <a class="btn" href="register.html">⬅️ ආපසු</a>
+    </div>
   </div>
-</header>
+</div>
 
 <div class="container">
-  <div class="card" id="meBox"></div>
-  <div class="card" id="box">Loading...</div>
+  <h1 class="h1">👤 සේවක ලියාපදිංචි වීම</h1>
+  <p class="p-muted">ඔබගේ තොරතුරු පුරවා ලියාපදිංචි වන්න. HOD අනුමැතියෙන් පසු ඔබට පද්ධතිය භාවිතා කළ හැකිය.</p>
+  
+  <div class="card elevated form-section">
+    
+    <!-- Loading Indicator -->
+    <div id="loadingDepts" class="alert" style="display:none;">
+      ⏳ දෙපාර්තමේන්තු පූරණය වෙමින්...
+    </div>
+    
+    <!-- Error Alert -->
+    <div id="deptError" class="alert error hidden"></div>
+    
+    <!-- Success/Error Message -->
+    <div id="msg" class="alert hidden"></div>
+    
+    <div class="grid two">
+      <div>
+        <label>👤 සම්පූර්ණ නම</label>
+        <input 
+          id="emp_name" 
+          placeholder="සමග ප්‍රනාන්දු"
+          autocomplete="name"
+          required
+        />
+        
+        <label>🆔 සේවක අංකය (Emp No)</label>
+        <input 
+          id="emp_no" 
+          placeholder="උදා: 20482"
+          autocomplete="off"
+          required
+        />
+        
+        <label>📧 විද්‍යුත් තැපෑල</label>
+        <input 
+          id="email" 
+          type="email" 
+          placeholder="name@example.com"
+          autocomplete="email"
+          required
+        />
+      </div>
+      
+      <div>
+        <label>🏢 දෙපාර්තමේන්තුව</label>
+        <select id="department_id" required>
+          <option value="">⏳ පූරණය වෙමින්...</option>
+        </select>
+        
+        <label>🔒 මුරපදය</label>
+        <input 
+          id="password" 
+          type="password" 
+          placeholder="අවම අකුරු 6"
+          autocomplete="new-password"
+          minlength="6"
+          required
+        />
+        
+        <label>🔒 මුරපදය නැවත ඇතුළත් කරන්න</label>
+        <input 
+          id="password_confirm" 
+          type="password" 
+          placeholder="මුරපදය නැවත ටයිප් කරන්න"
+          autocomplete="new-password"
+          minlength="6"
+          required
+        />
+      </div>
+    </div>
+    
+    <div class="toolbar" style="margin-top:18px;">
+      <div class="btnrow" style="width:100%;">
+        <button class="btn btn-primary" id="btnReg" style="width:100%; justify-content:center;">
+          ✅ ලියාපදිංචි වන්න
+        </button>
+      </div>
+    </div>
+    
+    <p class="p-muted" style="margin-top:18px; text-align:center; font-size:13px;">
+      දැනටමත් ගිණුමක් තිබේද? 
+      <a href="login.html" style="color:var(--brand); font-weight:700;">ඇතුල් වන්න →</a>
+    </p>
+  </div>
 </div>
 
 <script>
-async function guard(){
-  const me = await guardRole("EMP");
-  if(!me) return;
-  qs("meBox").innerHTML = `<b>${me.role}</b> | ${me.email}`;
+// Load departments with error handling
+(async ()=>{
+  const sel = document.getElementById("department_id");
+  const loadingDiv = document.getElementById("loadingDepts");
+  const errorDiv = document.getElementById("deptError");
+  
+  try {
+    // Show loading
+    loadingDiv.style.display = 'block';
+    sel.disabled = true;
+    
+    const d = await api("/public/departments");
+    const departments = d.departments || [];
+    
+    if(departments.length === 0) {
+      throw new Error("දෙපාර්තමේන්තු හමු නොවීය");
+    }
+    
+    // Populate dropdown
+    sel.innerHTML = '<option value="">-- තෝරන්න --</option>' + 
+      departments.map(x => `<option value="${x.id}">${x.name}</option>`).join("");
+    
+    // Hide loading
+    loadingDiv.style.display = 'none';
+    sel.disabled = false;
+    
+  } catch(e) {
+    console.error('Department load error:', e);
+    
+    // Show error
+    loadingDiv.style.display = 'none';
+    errorDiv.textContent = "⚠️ දෙපාර්තමේන්තු පූරණය කිරීමට නොහැකි විය: " + e.message;
+    errorDiv.classList.remove("hidden");
+    
+    // Fallback dropdown
+    sel.innerHTML = '<option value="">දෙපාර්තමේන්තු පූරණය අසාර්ථකයි</option>';
+    sel.disabled = true;
+  }
+})();
+
+// Form validation helper
+function validateForm() {
+  const emp_name = document.getElementById("emp_name").value.trim();
+  const emp_no = document.getElementById("emp_no").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const department_id = document.getElementById("department_id").value;
+  const password = document.getElementById("password").value;
+  const password_confirm = document.getElementById("password_confirm").value;
+  
+  if(!emp_name) return "⚠️ කරුණාකර ඔබගේ නම ඇතුළත් කරන්න";
+  if(!emp_no) return "⚠️ කරුණාකර සේවක අංකය ඇතුළත් කරන්න";
+  if(!email) return "⚠️ කරුණාකර විද්‍යුත් තැපෑල ඇතුළත් කරන්න";
+  if(!email.includes('@')) return "⚠️ වලංගු විද්‍යුත් තැපැල් ලිපිනයක් ඇතුළත් කරන්න";
+  if(!department_id) return "⚠️ කරුණාකර දෙපාර්තමේන්තුව තෝරන්න";
+  if(!password) return "⚠️ කරුණාකර මුරපදයක් ඇතුළත් කරන්න";
+  if(password.length < 6) return "⚠️ මුරපදය අවම අකුරු 6ක් විය යුතුය";
+  if(password !== password_confirm) return "⚠️ මුරපද ගැලපෙන්නේ නැත. නැවත පරීක්ෂා කරන්න";
+  
+  return null;
 }
 
-
-async function loadToday(){
-  const d = await api("/emp/today-transport");
-  if(!d.has_transport){
-    const msg = d.message || "ඔබට අද ප්‍රවාහන පහසුකම් අනුයුක්ත කර නැත.";
-    const hint = d.hint || "ඔබ අමතක වී ඇතුළත් නොවූ බව සිතෙන්නේ නම් හැකි ඉක්මනින් ප්‍රවාහන අධිකාරිය සම්බන්ධ කරගන්න.";
-    const phone = (d.ta_contact && d.ta_contact.phone) ? d.ta_contact.phone : "";
-    qs("box").innerHTML = `
-      <b>${msg}</b>
-      <div class="small" style="margin-top:6px;">${hint}</div>
-      ${phone ? `<div class="small" style="margin-top:6px;"><b>සම්බන්ධ වීමට:</b> ${phone}</div>` : ""}
-    `;
+// Registration handler
+document.getElementById("btnReg").onclick = async ()=>{
+  const msg = document.getElementById("msg");
+  const btn = document.getElementById("btnReg");
+  
+  // Validate
+  const validationError = validateForm();
+  if(validationError) {
+    msg.textContent = validationError;
+    msg.className = "alert error";
     return;
   }
+  
+  const payload = {
+    emp_name: document.getElementById("emp_name").value.trim(),
+    emp_no: document.getElementById("emp_no").value.trim(),
+    email: document.getElementById("email").value.trim(),
+    department_id: document.getElementById("department_id").value,
+    password: document.getElementById("password").value
+  };
+  
+  msg.className = "alert hidden";
+  btn.disabled = true;
+  btn.textContent = "⏳ යොමු කරමින්...";
+  
+  try {
+    const response = await api("/auth/register", { 
+      method: "POST", 
+      body: JSON.stringify(payload) 
+    });
+    
+    // Success
+    msg.textContent = "✅ සාර්ථකයි! ඔබගේ ගිණුම HOD අනුමැතිය සඳහා යොමු කර ඇත. ඔබට විද්‍යුත් තැපෑලෙන් දැනුම්දීමක් ලැබෙනු ඇත.";
+    msg.className = "alert ok";
+    
+    // Clear form
+    document.getElementById("emp_name").value = "";
+    document.getElementById("emp_no").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("department_id").value = "";
+    document.getElementById("password").value = "";
+    document.getElementById("password_confirm").value = "";
+    
+    btn.textContent = "✅ ලියාපදිංචි වන්න";
+    btn.disabled = false;
+    
+    // Redirect after 3 seconds
+    setTimeout(() => {
+      location.href = "login.html";
+    }, 3000);
+    
+  } catch(e) {
+    console.error('Registration error:', e);
+    
+    // Enhanced error messages
+    let errorMsg = e.message || "ලියාපදිංචිය අසාර්ථකයි";
+    
+    // Make errors more user-friendly
+    if(errorMsg.includes("duplicate") || errorMsg.includes("exists")) {
+      errorMsg = "⚠️ මෙම විද්‍යුත් තැපෑල හෝ සේවක අංකය දැනටමත් භාවිතා වේ";
+    } else if(errorMsg.includes("invalid") || errorMsg.includes("validation")) {
+      errorMsg = "⚠️ කරුණාකර සියලු තොරතුරු නිවැරදිව පුරවා ඇති දැයි සලකා බලන්න";
+    } else if(errorMsg.includes("network") || errorMsg.includes("fetch")) {
+      errorMsg = "⚠️ සර්වර් සම්බන්ධතා ගැටලුවක්. කරුණාකර නැවත උත්සාහ කරන්න";
+    } else if(errorMsg.includes("500") || errorMsg.includes("Server error")) {
+      errorMsg = "⚠️ සර්වර් දෝෂයක්. කරුණාකර පසුව නැවත උත්සාහ කරන්න";
+    }
+    
+    msg.textContent = "❌ " + errorMsg;
+    msg.className = "alert error";
+    btn.textContent = "✅ ලියාපදිංචි වන්න";
+    btn.disabled = false;
+  }
+};
 
-  const route = d.route || {};
-  const sub = d.sub_route || {};
-  const v0 = (d.vehicles && d.vehicles.length) ? d.vehicles[0] : {};
-
-  qs("box").innerHTML = `
-    <div style="font-weight:800; font-size:16px;">අදට ප්‍රවාහන විස්තර</div>
-    <div class="hr"></div>
-
-    <div class="row">
-      <div>
-        <div class="small">ගමන අවසන් කරන ස්ථානය</div>
-        <div style="font-weight:800;">${sub.sub_name || "—"}</div>
-      </div>
-      <div>
-        <div class="small">රූට්</div>
-        <div style="font-weight:800;">${route.route_no || ""} ${route.route_name ? "- "+route.route_name : ""}</div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div>
-        <div class="small">වාහනයේ ලියාපදිංචි අංකය</div>
-        <div style="font-weight:800;">${v0.vehicle_registration_no || "—"}</div>
-      </div>
-      <div>
-        <div class="small">වාහන අංකය</div>
-        <div style="font-weight:800;">${v0.vehicle_no || "—"} ${v0.fleet_no ? "(Fleet: "+v0.fleet_no+")" : ""}</div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div>
-        <div class="small">රියදුරු නම</div>
-        <div style="font-weight:800;">${v0.driver_name || "—"}</div>
-      </div>
-      <div>
-        <div class="small">දුරකථන අංකය</div>
-        <div style="font-weight:800;">${v0.driver_phone || "—"}</div>
-      </div>
-    </div>
-
-    <div class="hr"></div>
-    <div class="small"><b>උපදෙස්:</b> ${v0.instructions || "—"}</div>
-  `;
-}
-
-
-(async function init(){
-  try{
-    await guard();
-    await loadToday();
-  }catch(e){ toast(e.message); }
-})();
+// Enter key support
+document.querySelectorAll('input').forEach((input, index, inputs) => {
+  input.addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') {
+      e.preventDefault();
+      if(index < inputs.length - 1) {
+        inputs[index + 1].focus();
+      } else {
+        document.getElementById("btnReg").click();
+      }
+    }
+  });
+});
 </script>
+
 </body>
 </html>
