@@ -316,16 +316,54 @@ async function finalApprove(id){
   }catch(e){ toast("❌ " + e.message); }
 }
 
+window.open(`${API_BASE_URL || ''}/reports/daily/route-wise?date=${encodeURIComponent(d)}`, "_blank");
+}
+
+window.open(`${API_BASE_URL || ''}/reports/daily/vehicle?date=${encodeURIComponent(d)}`, "_blank");
+}
+
+async function downloadPdfWithAuth(path, filename){
+  const token = getToken();
+  if(!token){ toast("❌ Unauthorized: නැවත Login වෙන්න"); return; }
+
+  const base = (API_BASE_URL || "").replace(/\/$/, "");
+  const url = `${base}${path}`;
+
+  try{
+    const res = await fetch(url, { headers: { "Authorization": `Bearer ${token}` } });
+    if(!res.ok){
+      const t = await res.text();
+      // try parse json message
+      let msg = `HTTP ${res.status}`;
+      try{ const j = t ? JSON.parse(t) : null; msg = (j && (j.error || j.message)) || msg; }catch(e){}
+      throw new Error(msg);
+    }
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = objectUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(objectUrl), 1000);
+  }catch(e){
+    toast("❌ " + e.message);
+  }
+}
+
 function downloadRouteReport(){
   const d = qs("repDate").value;
   if(!d){ toast("⚠️ දිනය තෝරන්න"); return; }
-  window.open(`${API_BASE_URL || ''}/reports/daily/route-wise?date=${encodeURIComponent(d)}`, "_blank");
+  const file = `route-wise_${d}.pdf`;
+  downloadPdfWithAuth(`/reports/daily/route-wise?date=${encodeURIComponent(d)}`, file);
 }
 
 function downloadVehicleReport(){
   const d = qs("repDate").value;
   if(!d){ toast("⚠️ දිනය තෝරන්න"); return; }
-  window.open(`${API_BASE_URL || ''}/reports/daily/vehicle?date=${encodeURIComponent(d)}`, "_blank");
+  const file = `vehicle_${d}.pdf`;
+  downloadPdfWithAuth(`/reports/daily/vehicle?date=${encodeURIComponent(d)}`, file);
 }
 
 (async function init(){
