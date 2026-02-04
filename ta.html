@@ -481,12 +481,16 @@ async function submitTA(){
 function downloadRouteReport(){
   const d = qs("repDate").value;
   if(!d){ toast("⚠️ දිනය තෝරන්න"); return; }
-  window.open(`${API_BASE_URL || ''}/reports/daily/route-wise?date=${encodeURIComponent(d)}`, "_blank");
+  const url = `${API_BASE_URL || ''}/reports/daily/route-wise?date=${encodeURIComponent(d)}`;
+  console.log('Opening URL:', url);
+  window.open(url, "_blank");
 }
 function downloadVehicleReport(){
   const d = qs("repDate").value;
   if(!d){ toast("⚠️ දිනය තෝරන්න"); return; }
-  window.open(`${API_BASE_URL || ''}/reports/daily/vehicle?date=${encodeURIComponent(d)}`, "_blank");
+  const url = `${API_BASE_URL || ''}/reports/daily/vehicle?date=${encodeURIComponent(d)}`;
+  console.log('Opening URL:', url);
+  window.open(url, "_blank");
 }
 
 (async function init(){
