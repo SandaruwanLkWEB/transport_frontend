@@ -253,7 +253,7 @@ async function saveVehicle(){
     }
     const payload = { vehicle_no: vno, vehicle_type: vtype, capacity: cap, owner_name: owner, route_ids: routes };
     if(EDIT_VEH_ID){
-      await api(`/ta/vehicles/${EDIT_VEH_ID}`, { method:"PUT", body: JSON.stringify(payload) });
+      await api(`/ta/vehicles/${EDIT_VEH_ID}`, { method:"PATCH", body: JSON.stringify(payload) });
       toast("✅ Vehicle updated");
     }else{
       await api("/ta/vehicles", { method:"POST", body: JSON.stringify(payload) });
@@ -265,7 +265,7 @@ async function saveVehicle(){
 }
 
 async function loadRequests(){
-  const d = await api("/ta/requests");
+  const d = await api("/ta/requests/approved");
   REQS = d.requests || [];
   // build select
   let html = '<option value="">-- Select --</option>';
