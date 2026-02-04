@@ -470,16 +470,16 @@ async function loadRunSummary(){
   if(!date){ toast('⚠️ දිනය තෝරන්න'); return; }
   
   try {
-    const d = await api(`/admin/daily-run/summary?date=${date}`);
-    qs('runMeta').innerHTML = `<div class="badge ${d.is_locked ? 'ok' : 'warn'}">${d.is_locked ? '🔒 Locked' : '🔓 Not Locked'}</div>`;
+    const d = await api(`/admin/run/${date}/summary`);
+    qs('runMeta').innerHTML = `<div class="badge ${(d.master_request) ? 'ok' : 'warn'}">${(d.master_request) ? `🔒 Locked (${d.master_request.status})` : '🔓 Not Locked'}</div>`;
     
     // Department rows
     const deptRows = (d.departments || []).map(dep => 
       `<tr>
         <td>${dep.department_name}</td>
         <td>${dep.submitted ? '✅' : '❌'}</td>
-        <td>${dep.request_count || 0}</td>
-        <td>${dep.employee_count || 0}</td>
+        <td>${dep.requests_count || 0}</td>
+        <td>${dep.employees_count || 0}</td>
       </tr>`
     ).join('');
     qs('runDeptRows').innerHTML = deptRows || '<tr><td colspan="4" class="mini">No data</td></tr>';
@@ -500,7 +500,7 @@ async function lockRun(){
   if(!confirm(`Lock ${date} daily run? HODs won't be able to submit/edit after this.`)) return;
   
   try {
-    await api(`/admin/daily-run/lock`, {method:'POST', body: JSON.stringify({date})});
+    await api(`/admin/run/${date}/lock`, {method:'POST'});
     toast('✅ Daily run locked!');
     await loadRunSummary();
   } catch(e) {
