@@ -338,45 +338,82 @@ function capacityForAssignments(as){
 function renderGroups(){
   if(GROUPS.length===0){ qs("groupsBox").innerHTML = "<span class='badge warn'>⚠️ No groups</span>"; return; }
 
-  let html = "";
+  // Bucket sub-route groups under their main route (route-level grouping)
+  const routeMap = new Map();
+  const orderedRouteKeys = [];
   for(const g of GROUPS){
-    const key = groupKey(g.route_id, g.sub_route_id);
-    const routeText = g.route_id ? routeName(g.route_id) : "(No Route)";
-    const subText = g.sub_route_id ? subName(g.sub_route_id) : "";
-    const current = assignmentsForGroup(g.route_id, g.sub_route_id).map(x => ({...x}));
-    const cap = capacityForAssignments(current);
-    const remain = g.headcount - cap;
+    const rk = String(g.route_id ?? "null");
+    if(!routeMap.has(rk)){
+      routeMap.set(rk, { route_id: g.route_id ?? null, subs: [] });
+      orderedRouteKeys.push(rk);
+    }
+    routeMap.get(rk).subs.push(g);
+  }
 
+  let html = "";
+  for(const rk of orderedRouteKeys){
+    const rg = routeMap.get(rk);
+    const routeText = rg.route_id ? routeName(rg.route_id) : "(No Route)";
+
+    // Route-level totals (sum across all sub-routes)
+    let totalHead = 0;
+    let totalCap = 0;
+    for(const sg of rg.subs){
+      totalHead += Number(sg.headcount || 0);
+      const current = assignmentsForGroup(sg.route_id, sg.sub_route_id).map(x => ({...x}));
+      totalCap += capacityForAssignments(current);
+    }
+    const remain = totalHead - totalCap;
     const badge = remain <= 0 ? "<span class='badge good'>✅ ධාරිතාව හරි</span>" : "<span class='badge bad'>⚠️ ධාරිතාව අඩුයි</span>";
 
     html += `<div class="card" style="background:#fff; border:1px solid var(--border); margin-bottom:14px;">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px;">
         <div>
-          <div style="font-weight:700; font-size:15px;">${routeText} ${subText ? " / " + subText : ""}</div>
-          <div class="mini" style="margin-top:4px;">සේවක ගණන: <strong>${g.headcount}</strong> | දැනට ධාරිතාව: <strong>${cap}</strong> | අඩුයි: <strong>${Math.max(remain,0)}</strong></div>
+          <div style="font-weight:800; font-size:16px;">${routeText}</div>
+          <div class="mini" style="margin-top:4px;">මුළු සේවක ගණන: <strong>${totalHead}</strong> | මුළු ධාරිතාව: <strong>${totalCap}</strong> | අඩුයි: <strong>${Math.max(remain,0)}</strong></div>
         </div>
         <div>${badge}</div>
       </div>
 
       <hr style="margin:12px 0;"/>
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>වාහනය</th><th>රියදුරු නම</th><th>දුරකථනය</th><th>උපදෙස්</th><th>ඔවරයිඩ් (+)</th><th>හේතුව</th><th></th></tr>
-          </thead>
-          <tbody>
-            ${renderAssignRows(key, g.route_id, g.sub_route_id, current)}
-          </tbody>
-        </table>
-      </div>
+      ${rg.subs.map(sg => {
+        const key = groupKey(sg.route_id, sg.sub_route_id);
+        const subText = sg.sub_route_id ? subName(sg.sub_route_id) : "(No Sub Route)";
+        const current = assignmentsForGroup(sg.route_id, sg.sub_route_id).map(x => ({...x}));
+        const cap = capacityForAssignments(current);
+        const sremain = Number(sg.headcount || 0) - cap;
+        const sbadge = sremain <= 0 ? "<span class='badge good'>✅ ධාරිතාව හරි</span>" : "<span class='badge bad'>⚠️ ධාරිතාව අඩුයි</span>";
 
-      <div class="btnrow" style="margin-top:12px;">
-        <button class="btn small ghost" onclick="addAssignRow('${key}', ${g.route_id ?? "null"}, ${g.sub_route_id ?? "null"})">➕ වාහනයක් එක් කරන්න</button>
-        <button class="btn small btn-primary" onclick="saveGroup(${g.route_id ?? "null"}, ${g.sub_route_id ?? "null"})">💾 කණ්ඩායම සුරකින්න</button>
-      </div>
+        return `<div class="card" style="background:rgba(0,0,0,0.01); border:1px solid var(--border); margin:12px 0 0; padding:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px;">
+            <div>
+              <div style="font-weight:700; font-size:14px;">${subText}</div>
+              <div class="mini" style="margin-top:4px;">සේවක ගණන: <strong>${sg.headcount}</strong> | දැනට ධාරිතාව: <strong>${cap}</strong> | අඩුයි: <strong>${Math.max(sremain,0)}</strong></div>
+            </div>
+            <div>${sbadge}</div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>වාහනය</th><th>රියදුරු නම</th><th>දුරකථනය</th><th>උපදෙස්</th><th>ඔවරයිඩ් (+)</th><th>හේතුව</th><th></th></tr>
+              </thead>
+              <tbody>
+                ${renderAssignRows(key, sg.route_id, sg.sub_route_id, current)}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="btnrow" style="margin-top:12px;">
+            <button class="btn small ghost" onclick="addAssignRow('${key}', ${sg.route_id ?? "null"}, ${sg.sub_route_id ?? "null"})">➕ වාහනයක් එක් කරන්න</button>
+            <button class="btn small btn-primary" onclick="saveGroup(${sg.route_id ?? "null"}, ${sg.sub_route_id ?? "null"})">💾 කණ්ඩායම සුරකින්න</button>
+          </div>
+        </div>`;
+      }).join("")}
     </div>`;
   }
+
   qs("groupsBox").innerHTML = html;
 }
 
