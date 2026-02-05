@@ -431,45 +431,8 @@ async function loadRoutes(){
   }
 }
 
-// Add Department
-function showAddDept() {
-  const name = prompt("📝 දෙපාර්තමේන්තු නම ඇතුළත් කරන්න:");
-  if (!name || !name.trim()) return;
-  
-  toast('⏳ එකතු කරමින්...');
-  api('/admin/departments', {
-    method: 'POST',
-    body: JSON.stringify({ name: name.trim() })
-  }).then(() => {
-    toast('✅ දෙපාර්තමේන්තුව එකතු කරන ලදී!');
-    loadDepartments();
-  }).catch(e => {
-    toast('❌ දෝෂයක්: ' + e.message);
-  });
-}
-
-// Add Route
-function showAddRoute() {
-  const route_no = prompt("📝 මාර්ග අංකය ඇතුළත් කරන්න (උදා: 6):");
-  if (!route_no || !route_no.trim()) return;
-  
-  const route_name = prompt("📝 මාර්ග නම ඇතුළත් කරන්න (උදා: Negombo):");
-  if (!route_name || !route_name.trim()) return;
-  
-  toast('⏳ එකතු කරමින්...');
-  api('/admin/routes', {
-    method: 'POST',
-    body: JSON.stringify({ 
-      route_no: route_no.trim(),
-      route_name: route_name.trim()
-    })
-  }).then(() => {
-    toast('✅ මාර්ගය එකතු කරන ලදී!');
-    loadRoutes();
-  }).catch(e => {
-    toast('❌ දෝෂයක්: ' + e.message);
-  });
-}
+function showAddDept(){ toast("Feature coming soon"); }
+function showAddRoute(){ toast("Feature coming soon"); }
 
 async function doBulkSubs(){
   const routeId = qs('selRoute')?.value;
@@ -545,16 +508,81 @@ async function lockRun(){
   }
 }
 
-function downloadDailyPDF(){
-  const date = qs('repDate')?.value;
-  if(!date){ toast('⚠️ දිනය තෝරන්න'); return; }
-  window.open(`${API_BASE_URL || ''}/reports/daily?date=${date}&format=pdf`, '_blank');
+// Download files in the *current tab* (no window.open/new tab) so auth token stays valid.
+async function downloadFileWithAuth(url, filename, acceptHeader){
+  try{
+    const token = getToken();
+    if(!token){
+      toast('⚠️ Authentication required. Please login again.');
+      setTimeout(()=> location.href = 'login.html', 1500);
+      return;
+    }
+
+    toast('⏳ බාගත කරමින්... කරුණාකර රැඳී සිටින්න');
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': acceptHeader || '*/*'
+      }
+    });
+
+    if(!res.ok){
+      const errorText = await res.text();
+      let msg = `Download failed (${res.status})`;
+      try{
+        const j = JSON.parse(errorText);
+        msg = j.message || j.error || msg;
+      }catch(e){
+        if(res.status === 401) msg = 'Authentication failed. Please login again.';
+        else msg = errorText?.substring(0, 120) || msg;
+      }
+      throw new Error(msg);
+    }
+
+    const blob = await res.blob();
+    if(blob.size === 0) throw new Error('Downloaded file is empty.');
+
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = downloadUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{
+      window.URL.revokeObjectURL(downloadUrl);
+      document.body.removeChild(a);
+    }, 100);
+
+    toast('✅ බාගත කරන ලදී!');
+  }catch(err){
+    console.error('Download error:', err);
+    toast('❌ ' + (err?.message || 'Download failed'));
+  }
 }
 
-function downloadExcel(){
+async function downloadDailyPDF(){
   const date = qs('repDate')?.value;
   if(!date){ toast('⚠️ දිනය තෝරන්න'); return; }
-  window.open(`${API_BASE_URL || ''}/reports/daily?date=${date}&format=xlsx`, '_blank');
+  const url = `${API_BASE_URL || ''}/reports/daily?date=${encodeURIComponent(date)}&format=pdf`;
+  // Reuse existing helper from app.js if present
+  if(typeof downloadPdfWithAuth === 'function'){
+    return downloadPdfWithAuth(url, `daily-report-${date}.pdf`);
+  }
+  return downloadFileWithAuth(url, `daily-report-${date}.pdf`, 'application/pdf');
+}
+
+async function downloadExcel(){
+  const date = qs('repDate')?.value;
+  if(!date){ toast('⚠️ දිනය තෝරන්න'); return; }
+  const url = `${API_BASE_URL || ''}/reports/daily?date=${encodeURIComponent(date)}&format=xlsx`;
+  return downloadFileWithAuth(
+    url,
+    `daily-report-${date}.xlsx`,
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  );
 }
 
 // Initialize
@@ -578,4 +606,3 @@ function downloadExcel(){
 
 </body>
 </html>
-
