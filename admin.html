@@ -431,8 +431,45 @@ async function loadRoutes(){
   }
 }
 
-function showAddDept(){ toast("Feature coming soon"); }
-function showAddRoute(){ toast("Feature coming soon"); }
+// Add Department
+function showAddDept() {
+  const name = prompt("📝 දෙපාර්තමේන්තු නම ඇතුළත් කරන්න:");
+  if (!name || !name.trim()) return;
+  
+  toast('⏳ එකතු කරමින්...');
+  api('/admin/departments', {
+    method: 'POST',
+    body: JSON.stringify({ name: name.trim() })
+  }).then(() => {
+    toast('✅ දෙපාර්තමේන්තුව එකතු කරන ලදී!');
+    loadDepartments();
+  }).catch(e => {
+    toast('❌ දෝෂයක්: ' + e.message);
+  });
+}
+
+// Add Route
+function showAddRoute() {
+  const route_no = prompt("📝 මාර්ග අංකය ඇතුළත් කරන්න (උදා: 6):");
+  if (!route_no || !route_no.trim()) return;
+  
+  const route_name = prompt("📝 මාර්ග නම ඇතුළත් කරන්න (උදා: Negombo):");
+  if (!route_name || !route_name.trim()) return;
+  
+  toast('⏳ එකතු කරමින්...');
+  api('/admin/routes', {
+    method: 'POST',
+    body: JSON.stringify({ 
+      route_no: route_no.trim(),
+      route_name: route_name.trim()
+    })
+  }).then(() => {
+    toast('✅ මාර්ගය එකතු කරන ලදී!');
+    loadRoutes();
+  }).catch(e => {
+    toast('❌ දෝෂයක්: ' + e.message);
+  });
+}
 
 async function doBulkSubs(){
   const routeId = qs('selRoute')?.value;
@@ -541,3 +578,4 @@ function downloadExcel(){
 
 </body>
 </html>
+
