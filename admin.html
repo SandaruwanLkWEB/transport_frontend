@@ -400,13 +400,13 @@ async function rejectH(id){
 }
 
 // Master data functions
-async function loadDepartments(){
+async async function loadDepartments(){
   try {
     const d = await api("/admin/departments");
     DEPS = d.departments || [];
     let html = "<table><thead><tr><th>Name</th><th>Action</th></tr></thead><tbody>";
     for(const dep of DEPS){
-      html += `<tr><td>${dep.name}</td><td><button class='btn small ghost'>Edit</button></td></tr>`;
+      html += `<tr><td>${dep.name}</td><td><button class='btn small ghost' onclick="editDept(${dep.id})">Edit</button></td></tr>`;
     }
     html += "</tbody></table>";
     qs("deptList").innerHTML = html;
@@ -415,7 +415,31 @@ async function loadDepartments(){
   }
 }
 
-async function loadRoutes(){
+
+
+async async function editDept(id){
+  try{
+    const dep = (DEPS || []).find(d => String(d.id) === String(id));
+    const current = dep?.name || "";
+    const name = prompt("Department name (නව නාමය):", current);
+    if(name === null) return; // cancelled
+    const trimmed = name.trim();
+    if(!trimmed){ toast("⚠️ නාමය අවශ්‍යයි"); return; }
+
+    await api(`/admin/departments/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: trimmed })
+    });
+
+    toast("✅ Updated");
+    await loadDepartments(); // refresh list
+  }catch(e){
+    toast("❌ " + e.message);
+  }
+}
+
+async async function loadRoutes(){
   try {
     const tree = await loadRouteTree();
     ROUTES = tree.routes || [];
