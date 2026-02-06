@@ -171,7 +171,7 @@ function setTab(active){
 function showTab(t){ setTab(t); }
 
 async function initLookups(){
-  const tree = await loadRouteTree();
+  const tree = await loadRouteTree(true);
   // Employee add route selects
   qs("eRoute").innerHTML = optionHTML(tree.routes.map(r=>({id:r.id, label:`${r.route_no} - ${r.route_name}`})),"id","label","",true,"-- Select Route --");
   qs("eRoute").addEventListener("change", ()=>{

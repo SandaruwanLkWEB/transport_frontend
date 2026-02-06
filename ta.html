@@ -532,7 +532,7 @@ function downloadVehicleReport(){
 (async function init(){
   try{
     await guard();
-    await loadRouteTree();
+    await loadRouteTree(true);
     renderRouteChecks([]);
     await loadVehicles();
     await loadRequests();
