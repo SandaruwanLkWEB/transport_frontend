@@ -236,7 +236,13 @@ function setTab(tab){
     if(pane) pane.style.display = (t===tab) ? "" : "none";
     if(btn) btn.classList.toggle("active", t===tab);
   }
+  // Ensure Master Data is always up-to-date when opened
+  if(tab === "master"){
+    loadDepartments();
+    loadRoutes();
+  }
 }
+
 
 async function guard(){
   try {
@@ -511,13 +517,13 @@ async function lockRun(){
 function downloadDailyPDF(){
   const date = qs('repDate')?.value;
   if(!date){ toast('⚠️ දිනය තෝරන්න'); return; }
-  window.open(`${API_BASE_URL || ''}/reports/daily?date=${date}&format=pdf`, '_self');
+  window.open(`${API_BASE_URL || ''}/reports/daily?date=${date}&format=pdf`, '_blank');
 }
 
 function downloadExcel(){
   const date = qs('repDate')?.value;
   if(!date){ toast('⚠️ දිනය තෝරන්න'); return; }
-  window.open(`${API_BASE_URL || ''}/reports/daily?date=${date}&format=xlsx`, '_self');
+  window.open(`${API_BASE_URL || ''}/reports/daily?date=${date}&format=xlsx`, '_blank');
 }
 
 // Initialize
