@@ -62,24 +62,35 @@ function logout(){
 
 // ---- Lookups (routes/subroutes) ----
 let ROUTE_TREE = null;
-async function loadRouteTree(){
-  if(ROUTE_TREE) return ROUTE_TREE;
-  try{
-    const cached = localStorage.getItem("routesTree");
-    if(cached){
-      const obj = JSON.parse(cached);
-      // cache up to 6 hours
-      if(obj && obj.at && (Date.now() - obj.at) < (6*60*60*1000) && obj.data){
-        ROUTE_TREE = obj.data;
-        return ROUTE_TREE;
+async function loadRouteTree(force=false){
+  // force=true => always refetch from server (ignore in-memory + localStorage cache)
+  if(!force && ROUTE_TREE) return ROUTE_TREE;
+
+  const CACHE_MS = 60 * 1000; // 1 minute (routes can change during the day)
+  if(!force){
+    try{
+      const cached = localStorage.getItem("routesTree");
+      if(cached){
+        const obj = JSON.parse(cached);
+        if(obj && obj.at && (Date.now() - obj.at) < CACHE_MS && obj.data){
+          ROUTE_TREE = obj.data;
+          return ROUTE_TREE;
+        }
       }
-    }
-  }catch(e){}
+    }catch(e){}
+  }
 
   const d = await api("/lookup/routes-tree");
   ROUTE_TREE = { routes: d.routes || [], sub_routes: d.sub_routes || [] };
-  localStorage.setItem("routesTree", JSON.stringify({ at: Date.now(), data: ROUTE_TREE }));
+  try{
+    localStorage.setItem("routesTree", JSON.stringify({ at: Date.now(), data: ROUTE_TREE }));
+  }catch(e){}
   return ROUTE_TREE;
+}
+
+function invalidateRoutesTree(){
+  ROUTE_TREE = null;
+  try{ localStorage.removeItem("routesTree"); }catch(e){}
 }
 
 function subRoutesFor(route_id){
