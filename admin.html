@@ -236,13 +236,7 @@ function setTab(tab){
     if(pane) pane.style.display = (t===tab) ? "" : "none";
     if(btn) btn.classList.toggle("active", t===tab);
   }
-  // Ensure Master Data is always up-to-date when opened
-  if(tab === "master"){
-    loadDepartments();
-    loadRoutes();
-  }
 }
-
 
 async function guard(){
   try {
@@ -406,33 +400,12 @@ async function loadDepartments(){
     DEPS = d.departments || [];
     let html = "<table><thead><tr><th>Name</th><th>Action</th></tr></thead><tbody>";
     for(const dep of DEPS){
-      html += `<tr><td>${dep.name}</td><td><button class='btn small ghost' onclick='editDept(${dep.id})'>Edit</button></td></tr>`;
+      html += `<tr><td>${dep.name}</td><td><button class='btn small ghost'>Edit</button></td></tr>`;
     }
     html += "</tbody></table>";
     qs("deptList").innerHTML = html;
   } catch(e) {
     qs("deptList").innerHTML = `<div class="alert error">${e.message}</div>`;
-  }
-}
-
-
-async function editDept(id){
-  try{
-    const dep = (DEPS || []).find(d => d.id === id);
-    const currentName = dep ? dep.name : '';
-    const name = prompt("Department නම වෙනස් කරන්න", currentName);
-    if(name === null) return;
-    const trimmed = (name || "").trim();
-    if(!trimmed){ toast("⚠️ නම හිස් වෙන්න බෑ"); return; }
-    await api(`/admin/departments/${id}`, {
-      method: "PUT",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ name: trimmed })
-    });
-    toast("✅ Department update වුණා");
-    await loadDepartments();
-  }catch(e){
-    toast("❌ " + e.message);
   }
 }
 
@@ -458,8 +431,45 @@ async function loadRoutes(){
   }
 }
 
-function showAddDept(){ toast("Feature coming soon"); }
-function showAddRoute(){ toast("Feature coming soon"); }
+// Add Department
+function showAddDept() {
+  const name = prompt("📝 දෙපාර්තමේන්තු නම ඇතුළත් කරන්න:");
+  if (!name || !name.trim()) return;
+  
+  toast('⏳ එකතු කරමින්...');
+  api('/admin/departments', {
+    method: 'POST',
+    body: JSON.stringify({ name: name.trim() })
+  }).then(() => {
+    toast('✅ දෙපාර්තමේන්තුව එකතු කරන ලදී!');
+    loadDepartments();
+  }).catch(e => {
+    toast('❌ දෝෂයක්: ' + e.message);
+  });
+}
+
+// Add Route
+function showAddRoute() {
+  const route_no = prompt("📝 මාර්ග අංකය ඇතුළත් කරන්න (උදා: 6):");
+  if (!route_no || !route_no.trim()) return;
+  
+  const route_name = prompt("📝 මාර්ග නම ඇතුළත් කරන්න (උදා: Negombo):");
+  if (!route_name || !route_name.trim()) return;
+  
+  toast('⏳ එකතු කරමින්...');
+  api('/admin/routes', {
+    method: 'POST',
+    body: JSON.stringify({ 
+      route_no: route_no.trim(),
+      route_name: route_name.trim()
+    })
+  }).then(() => {
+    toast('✅ මාර්ගය එකතු කරන ලදී!');
+    loadRoutes();
+  }).catch(e => {
+    toast('❌ දෝෂයක්: ' + e.message);
+  });
+}
 
 async function doBulkSubs(){
   const routeId = qs('selRoute')?.value;
@@ -538,13 +548,13 @@ async function lockRun(){
 function downloadDailyPDF(){
   const date = qs('repDate')?.value;
   if(!date){ toast('⚠️ දිනය තෝරන්න'); return; }
-  window.open(`${API_BASE_URL || ''}/reports/daily?date=${date}&format=pdf`, '_self');
+  window.open(`${API_BASE_URL || ''}/reports/daily?date=${date}&format=pdf`, '_blank');
 }
 
 function downloadExcel(){
   const date = qs('repDate')?.value;
   if(!date){ toast('⚠️ දිනය තෝරන්න'); return; }
-  window.open(`${API_BASE_URL || ''}/reports/daily?date=${date}&format=xlsx`, '_self');
+  window.open(`${API_BASE_URL || ''}/reports/daily?date=${date}&format=xlsx`, '_blank');
 }
 
 // Initialize
