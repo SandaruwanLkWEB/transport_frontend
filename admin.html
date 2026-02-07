@@ -436,9 +436,10 @@ async function editDept(id){
   }
 }
 
-async function loadRoutes(){
+async function loadRoutes(force=true){
   try {
-    const tree = await loadRouteTree();
+        // Admin expects immediate updates after adding/editing routes/sub-routes
+    const tree = await loadRouteTree(!!force);
     ROUTES = tree.routes || [];
     SUBS = tree.sub_routes || [];
     
@@ -492,7 +493,8 @@ function showAddRoute() {
     })
   }).then(() => {
     toast('✅ මාර්ගය එකතු කරන ලදී!');
-    loadRoutes();
+    invalidateRoutesTree();
+    loadRoutes(true);
   }).catch(e => {
     toast('❌ දෝෂයක්: ' + e.message);
   });
@@ -508,7 +510,8 @@ async function doBulkSubs(){
     const r = await bulkUpsertSubs(routeId, lines);
     toast(`✅ Bulk OK: ${r.inserted||0} sub-routes added`);
     qs('bulkLines').value='';
-    await loadRoutes();
+    invalidateRoutesTree();
+    await loadRoutes(true);
   }catch(e){ 
     toast('❌ ' + e.message); 
   }
