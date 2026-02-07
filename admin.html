@@ -204,25 +204,17 @@
   <!-- Reports Pane -->
   <div class="card" id="pane_reports" style="display:none;">
     <h2 class="h2">📈 Reports</h2>
-    <hr/>
-
-    <div class="alert info" style="margin-bottom:14px;">
-      Reports download කරන්නේ HR Final Approval පස්සේම. දිනය තෝරලා අදාල වාර්තාව බාගත කරන්න.
-    </div>
-
-    <div style="margin-top:8px;">
+    
+    <div style="margin-top:18px;">
       <label>📅 දිනය</label>
       <input id="repDate" type="date" />
     </div>
-
-    <div class="btnrow" style="margin-top:12px; flex-wrap:wrap;">
-      <!-- TA වගේ PDF Reports -->
-      <button class="btn btn-primary" onclick="downloadRouteReport()">📄 Route-wise PDF</button>
-      <button class="btn secondary" onclick="downloadVehicleReport()">📄 Vehicle PDF</button>
-</div>
-
-    <p class="mini" style="margin-top:10px;">💡 If your browser blocks downloads, open the URL in new tab.</p>
-
+    
+    <div class="btnrow" style="margin-top:12px;">
+      <button class="btn btn-primary" onclick="downloadDailyPDF()">📄 Download Daily PDF</button>
+      <button class="btn" onclick="downloadExcel()">📊 Download Excel</button>
+    </div>
+    
     <div id="reportPreview" style="margin-top:18px;"></div>
   </div>
 
@@ -434,7 +426,7 @@ async function editDept(id){
 
   try{
     await api(`/admin/departments/${id}`, {
-      method: "PUT",
+      method: "PATCH",
       body: JSON.stringify({ name: name.trim() })
     });
     toast("✅ Updated!");
@@ -580,24 +572,17 @@ async function lockRun(){
   }
 }
 
-
-function downloadRouteReport(){
-  const d = qs("repDate")?.value;
-  if(!d){ toast("⚠️ දිනය තෝරන්න"); return; }
-  const base = (API_BASE_URL || "").replace(/\/$/, "");
-  const url = `${base}/reports/daily/route-wise?date=${encodeURIComponent(d)}`;
-  downloadPdfWithAuth(url, `route-wise-${d}.pdf`);
+function downloadDailyPDF(){
+  const date = qs('repDate')?.value;
+  if(!date){ toast('⚠️ දිනය තෝරන්න'); return; }
+  window.open(`${API_BASE_URL || ''}/reports/daily?date=${date}&format=pdf`, '_self');
 }
 
-function downloadVehicleReport(){
-  const d = qs("repDate")?.value;
-  if(!d){ toast("⚠️ දිනය තෝරන්න"); return; }
-  const base = (API_BASE_URL || "").replace(/\/$/, "");
-  const url = `${base}/reports/daily/vehicle?date=${encodeURIComponent(d)}`;
-  downloadPdfWithAuth(url, `vehicle-${d}.pdf`);
+function downloadExcel(){
+  const date = qs('repDate')?.value;
+  if(!date){ toast('⚠️ දිනය තෝරන්න'); return; }
+  window.open(`${API_BASE_URL || ''}/reports/daily?date=${date}&format=xlsx`, '_self');
 }
-
-
 
 // Initialize
 (async()=>{
