@@ -37,7 +37,7 @@
         <input id="runDate" type="date" />
       </div>
       <div class="btnrow">
-        <button class="btn" onclick="loadRunSummary()">🔄 යාවත්කාලීන කරන්න</button>
+        <button class="btn" onclick="loadRunSummaryLive()">🔄 යාවත්කාලීන කරන්න</button>
         <button class="btn btn-primary" onclick="lockRun()">🔒 Lock Today → TA</button>
       </div>
     </div>
@@ -431,6 +431,7 @@ async function editDept(id){
     });
     toast("✅ Updated!");
     await loadDepartments(); // live refresh
+    await loadRunSummaryLive();
   }catch(e){
     toast("❌ " + e.message);
   }
@@ -470,8 +471,8 @@ function showAddDept() {
     body: JSON.stringify({ name: name.trim() })
   }).then(() => {
     toast('✅ දෙපාර්තමේන්තුව එකතු කරන ලදී!');
-    loadDepartments();
-  }).catch(e => {
+    loadDepartments().then(()=>loadRunSummaryLive());
+}).catch(e => {
     toast('❌ දෝෂයක්: ' + e.message);
   });
 }
@@ -561,6 +562,21 @@ async function loadRunSummary(){
   }
 }
 
+// Live-safe wrapper (prevents overlapping calls + avoids toast spam)
+let __runSummaryBusy = false;
+async function loadRunSummaryLive(){
+  const date = qs('runDate')?.value;
+  if(!date) return;
+  if(__runSummaryBusy) return;
+  __runSummaryBusy = true;
+  try{
+    await loadRunSummary();
+  }finally{
+    __runSummaryBusy = false;
+  }
+}
+
+
 async function lockRun(){
   const date = qs('runDate')?.value;
   if(!date){ toast('⚠️ දිනය තෝරන්න'); return; }
@@ -569,8 +585,8 @@ async function lockRun(){
   try {
     await api(`/admin/run/${date}/lock`, {method:'POST'});
     toast('✅ Daily run locked!');
-    await loadRunSummary();
-  } catch(e) {
+        await loadRunSummaryLive();
+} catch(e) {
     toast('❌ ' + e.message);
   }
 }
@@ -591,6 +607,14 @@ function downloadExcel(){
 (async()=>{
   await guard();
   setDefaultRunDate();
+  // Load run summary once + keep it live
+  await loadRunSummaryLive();
+  try{
+    const rd = qs('runDate');
+    if(rd) rd.addEventListener('change', ()=>loadRunSummaryLive());
+  }catch(e){}
+  setInterval(()=>{ if(document.hidden) return; loadRunSummaryLive(); }, 25000);
+
   await loadRequests();
   await loadDepartments();
   await loadRoutes();
