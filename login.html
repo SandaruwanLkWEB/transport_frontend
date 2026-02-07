@@ -347,7 +347,8 @@ const resetOtp = document.getElementById("resetOtp");
 const resetNewPass = document.getElementById("resetNewPass");
 const resetNewPass2 = document.getElementById("resetNewPass2");
 
-let resetIdentifier = { email: "", emp_no: "" };
+// Store only the identifier that the user used (email OR emp_no)
+let resetIdentifier = {};
 
 function openResetModal(){
   resetMsg.classList.add("hidden");
@@ -394,7 +395,8 @@ async function requestOtp(){
 
   // Prefer email if both provided
   const payload = email ? { email } : { emp_no };
-  resetIdentifier = { email: payload.email || "", emp_no: payload.emp_no || "" };
+  // IMPORTANT: do not keep empty-string fields, backend validates formats
+  resetIdentifier = payload;
 
   const btn = document.getElementById("btnSendOtp");
   btn.disabled = true;
