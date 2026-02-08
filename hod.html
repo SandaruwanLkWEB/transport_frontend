@@ -406,16 +406,21 @@ function renderRequests(){
     </tr>`;
   }
   html += "</table>";
-  qs("reqList").innerHTML = `<div class="table-wrap">${html}</div>`;
+  qs("reqList").innerHTML = html;
 }
 
 async function openEditor(id){
   try{
     CURRENT_REQ_ID = id;
     PENDING_CHANGES = new Map();
-    const d = await api(`/hod/requests/${id}`);
+    // Show editor immediately to avoid mobile UI feeling "stuck"
     qs("reqEditor").style.display = "";
     qs("editReqId").textContent = id;
+    qs("reqMeta").innerHTML = `<span class="small">Loading request details...</span>`;
+    qs("reqEmployeesBox").innerHTML = `<div class="small">Loading...</div>`;
+    try{ qs("reqEditor").scrollIntoView({behavior:"smooth", block:"start"}); }catch(_e){}
+
+    const d = await api(`/hod/requests/${id}`);
     qs("reqMeta").innerHTML = `Date: <b>${fmtDate(d.request.request_date)}</b> | Time: <b>${fmtTime(d.request.request_time)}</b> | Status: ${statusBadge(d.request.status)}`;
 
     if(!["DRAFT","SUBMITTED"].includes(d.request.status)){
@@ -424,7 +429,11 @@ async function openEditor(id){
     }
 
     qs("reqEmployeesBox").innerHTML = renderReqEmployeesTable(d.employees, false);
-  }catch(e){ toast(e.message); }
+  }catch(e){
+    toast(e.message);
+    qs("reqMeta").innerHTML = `<span class="small">Failed to load request.</span>`;
+    qs("reqEmployeesBox").innerHTML = "";
+  }
 }
 
 function renderReqEmployeesTable(items, readonly){
