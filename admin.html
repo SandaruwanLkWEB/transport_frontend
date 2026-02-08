@@ -211,9 +211,9 @@
     </div>
     
     <div class="btnrow" style="margin-top:12px;">
-      <button class="btn btn-primary" onclick="downloadDailyPDF()">📄 Download Daily PDF</button>
-      <button class="btn" onclick="downloadExcel()">📊 Download Excel</button>
+      <button class="btn btn-primary" onclick="downloadRouteReport()">📄 Route-wise PDF</button>
     </div>
+    <p class="mini" style="margin-top:10px;">💡 Download එක block වුනොත් new tab එකක open කරන්න.</p>
     
     <div id="reportPreview" style="margin-top:18px;"></div>
   </div>
@@ -591,16 +591,39 @@ async function lockRun(){
   }
 }
 
-function downloadDailyPDF(){
-  const date = qs('repDate')?.value;
-  if(!date){ toast('⚠️ දිනය තෝරන්න'); return; }
-  window.open(`${API_BASE_URL || ''}/reports/daily?date=${date}&format=pdf`, '_self');
+function downloadPdfWithAuth(url, filename){
+  const token = localStorage.getItem("token");
+  fetch(url, {
+    method: "GET",
+    headers: token ? { "Authorization": `Bearer ${token}` } : {}
+  }).then(async (res)=>{
+    if(!res.ok){
+      const t = await res.text().catch(()=> "");
+      throw new Error(t || `HTTP ${res.status}`);
+    }
+    const blob = await res.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename || "report.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+  }).catch((e)=>{
+    console.error(e);
+    // fallback open new tab
+    window.open(url, "_blank");
+  });
 }
 
-function downloadExcel(){
-  const date = qs('repDate')?.value;
-  if(!date){ toast('⚠️ දිනය තෝරන්න'); return; }
-  window.open(`${API_BASE_URL || ''}/reports/daily?date=${date}&format=xlsx`, '_self');
+function downloadRouteReport(){
+  const d = qs("repDate")?.value;
+  if(!d){ toast("⚠️ දිනය තෝරන්න"); return; }
+  const base = (API_BASE_URL || "").replace(/\/$/, "");
+  const url = `${base}/reports/daily/route-wise?date=${encodeURIComponent(d)}`;
+  downloadPdfWithAuth(url, `route-wise-${d}.pdf`);
+}
+window.open(`${API_BASE_URL || ''}/reports/daily?date=${date}&format=xlsx`, '_self');
 }
 
 // Initialize
