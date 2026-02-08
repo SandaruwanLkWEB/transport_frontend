@@ -815,3 +815,30 @@ header h1 {
     background: white;
   }
 }
+
+
+/* TA vehicle route checkbox grid (mobile-friendly) */
+.route-check-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap:10px 14px;
+  margin-top:10px;
+}
+.route-check-item{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  padding:8px 10px;
+  border:1px solid rgba(0,0,0,0.08);
+  border-radius:12px;
+  background: rgba(255,255,255,0.6);
+}
+.route-check-item input{
+  width:18px;
+  height:18px;
+}
+
+/* Better horizontal scrolling for tables on mobile */
+.table-wrap{
+  -webkit-overflow-scrolling: touch;
+}
