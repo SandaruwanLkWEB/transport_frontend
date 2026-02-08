@@ -406,7 +406,7 @@ function renderRequests(){
     </tr>`;
   }
   html += "</table>";
-  qs("reqList").innerHTML = html;
+  qs("reqList").innerHTML = `<div class="table-wrap">${html}</div>`;
 }
 
 async function openEditor(id){

@@ -182,10 +182,7 @@ function renderRouteChecks(selectedIds=[]){
   for(const r of ROUTE_TREE.routes){
     const id = r.id;
     const checked = selSet.has(String(id)) ? "checked" : "";
-    html += `<label style="display:flex; gap:8px; align-items:center; margin:6px 0;">
-      <input type="checkbox" class="routeChk" value="${id}" ${checked} />
-      <span>${r.route_no} - ${r.route_name}</span>
-    </label>`;
+        html += `<label class="route-check-item"><input type="checkbox" class="routeChk" value="${id}" ${checked} /><span>${r.route_no} - ${r.route_name}</span></label>`;
   }
   qs("routeChecks").innerHTML = html || "<span class='mini'>⚠️ No routes found (Admin must create routes first)</span>";
 }
