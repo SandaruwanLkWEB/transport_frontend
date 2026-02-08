@@ -20,6 +20,47 @@ function toast(msg){
   window.__toastTimer = setTimeout(()=>{ t.style.display="none"; }, 2600);
 }
 
+// =====================================================================
+// SECURITY FIX: XSS Protection Functions
+// =====================================================================
+
+/**
+ * Escapes HTML to prevent XSS attacks
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped text safe for HTML
+ */
+function escapeHtml(text) {
+  if (text === null || text === undefined) return '';
+  const div = document.createElement('div');
+  div.textContent = String(text);
+  return div.innerHTML;
+}
+
+/**
+ * Safely set innerHTML by sanitizing content
+ * Use this instead of directly setting innerHTML
+ * @param {HTMLElement} element - Target element
+ * @param {string} html - HTML content (will be sanitized)
+ */
+function safeSetHtml(element, html) {
+  // For now, we'll create a text node for safety
+  // In production, you'd use a proper sanitization library like DOMPurify
+  const temp = document.createElement('div');
+  temp.textContent = html;
+  element.innerHTML = temp.innerHTML;
+}
+
+/**
+ * Create a safe text node (prevents XSS)
+ * @param {HTMLElement} element - Target element
+ * @param {string} text - Text content
+ */
+function safeSetText(element, text) {
+  element.textContent = text;
+}
+
+// =====================================================================
+
 async function api(path, options = {}) {
   const headers = Object.assign({ "Content-Type": "application/json" }, options.headers || {});
   const token = getToken();
@@ -98,12 +139,13 @@ function subRoutesFor(route_id){
   return ROUTE_TREE.sub_routes.filter(s => String(s.route_id) === String(route_id));
 }
 
+// SECURITY FIX: Escape values in optionHTML to prevent XSS
 function optionHTML(list, valueKey, labelKey, selectedValue, includeEmpty=true, emptyLabel="-- තෝරන්න --"){
-  let html = includeEmpty ? `<option value="">${emptyLabel}</option>` : "";
+  let html = includeEmpty ? `<option value="">${escapeHtml(emptyLabel)}</option>` : "";
   for(const x of list){
-    const v = x[valueKey];
-    const label = x[labelKey];
-    const sel = String(v) === String(selectedValue) ? "selected" : "";
+    const v = escapeHtml(x[valueKey]);
+    const label = escapeHtml(x[labelKey]);
+    const sel = String(x[valueKey]) === String(selectedValue) ? "selected" : "";
     html += `<option value="${v}" ${sel}>${label}</option>`;
   }
   return html;
@@ -113,15 +155,16 @@ function statusBadge(status){
   const map = {
     "DRAFT": ["කෙටුම්පත","warn"],
     "SUBMITTED": ["යොමු කර ඇත","warn"],
-    "ADMIN_APPROVED": ["පරිපාලක අනුමත","ok"],  // FIXED: changed "good" to "ok"
-    "TA_ASSIGNED_PENDING_HR": ["HR ඔවරයිඩ් අනුමැතිය බලාපොරොත්තු","warn"],
-    "TA_ASSIGNED": ["වාහන අනුයුක්ත කර ඇත","ok"],  // FIXED: changed "good" to "ok"
+    "ADMIN_APPROVED": ["පරිපාලක අනුමැතිය ලැබි ඇත","ok"],
+    "TA_ASSIGNED_PENDING_HR": ["HR ඔවරයිඩ් අනුමැතිය බලාපොරොත්තුවෙන්","warn"],
+    "TA_ASSIGNED": ["වාහන අනුයුක්ත කර ඇත","ok"],
     "TA_FIX_REQUIRED": ["TA විසින් සකස් කළ යුතුයි","warn"],
-    "HR_FINAL_APPROVED": ["අවසාන අනුමත","ok"],  // FIXED: changed "good" to "ok"
-    "REJECTED": ["ප්‍රතික්ෂේප","bad"]
+    "HR_FINAL_APPROVED": ["අවසාන අනුමැතිය ලැබි ඇත","ok"],
+    "REJECTED": ["ප්‍රතික්ෂේප කර ඇත","bad"]
   };
   const v = map[status] || [status, "badge"];
-  return `<span class="badge ${v[1]}">${v[0]}</span>`;
+  // SECURITY FIX: Escape status text
+  return `<span class="badge ${escapeHtml(v[1])}">${escapeHtml(v[0])}</span>`;
 }
 
 function fmtDate(s){
@@ -135,7 +178,6 @@ function fmtDate(s){
   return String(s);
 }
 
-// FIXED: Consolidated single fmtTime function with full functionality
 function fmtTime(s){
   if(!s) return "";
   if(typeof s === "string"){
