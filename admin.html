@@ -623,8 +623,6 @@ function downloadRouteReport(){
   const url = `${base}/reports/daily/route-wise?date=${encodeURIComponent(d)}`;
   downloadPdfWithAuth(url, `route-wise-${d}.pdf`);
 }
-window.open(`${API_BASE_URL || ''}/reports/daily?date=${date}&format=xlsx`, '_self');
-}
 
 // Initialize
 (async()=>{
