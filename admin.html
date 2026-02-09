@@ -213,7 +213,7 @@
     <div class="btnrow" style="margin-top:12px;">
       <button class="btn btn-primary" onclick="downloadRouteReport()">📄 Route-wise PDF</button>
     </div>
-    <p class="mini" style="margin-top:10px;">💡 Report එක මේ ටැබ් එකේම preview වෙනවා.</p>
+    <p class="mini" style="margin-top:10px;">💡 PDF එක මේ ටැබ් එක ඇතුලේම preview වෙනවා.</p>
     
     <div id="reportPreview" style="margin-top:18px;"></div>
   </div>
@@ -591,12 +591,50 @@ async function lockRun(){
   }
 }
 
-function openPdfInTabWithAuth(url, filename){
+function downloadPdfWithAuth(url, filename){
   const token = localStorage.getItem("token");
-  const preview = qs("reportPreview");
-  if(preview){
-    preview.innerHTML = "<div class='mini' style='padding:10px;'>⏳ PDF එක load වෙනවා...</div>";
+  fetch(url, {
+    method: "GET",
+    headers: token ? { "Authorization": `Bearer ${token}` } : {}
+  }).then(async (res)=>{
+    if(!res.ok){
+      const t = await res.text().catch(()=> "");
+      throw new Error(t || `HTTP ${res.status}`);
+    }
+    const blob = await res.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename || "report.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+  }).catch((e)=>{
+    console.error(e);
+    // fallback open new tab
+    window.open(url, "_blank");
+  });
+}
+
+let __REPORT_PREVIEW_URL = null;
+
+function previewPdfWithAuth(url, filename){
+  const box = qs("reportPreview");
+  if(!box){
+    // fallback: download
+    downloadPdfWithAuth(url, filename);
+    return;
   }
+  box.innerHTML = `<div class="mini">⏳ Loading PDF preview...</div>`;
+
+  try{
+    if(__REPORT_PREVIEW_URL){
+      URL.revokeObjectURL(__REPORT_PREVIEW_URL);
+      __REPORT_PREVIEW_URL = null;
+    }
+  }catch(e){}
+
+  const token = localStorage.getItem("token");
   fetch(url, {
     method: "GET",
     headers: token ? { "Authorization": `Bearer ${token}` } : {}
@@ -607,50 +645,35 @@ function openPdfInTabWithAuth(url, filename){
     }
     const blob = await res.blob();
     const objUrl = URL.createObjectURL(blob);
-    const fname = filename || "report.pdf";
+    __REPORT_PREVIEW_URL = objUrl;
 
-    // If reports pane exists, preview it inside the same tab
-    if(preview){
-      // revoke previous preview url
-      try{
-        if(window.__lastReportObjUrl) URL.revokeObjectURL(window.__lastReportObjUrl);
-      }catch(e){}
-      window.__lastReportObjUrl = objUrl;
-
-      preview.innerHTML = `
-        <div class="mini" style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; padding:8px 0;">
-          <span>✅ PDF Preview</span>
-          <a class="btn ghost small" href="${objUrl}" download="${fname}">⬇️ Download</a>
+    const safeName = (filename || "report.pdf").replace(/"/g, "");
+    box.innerHTML = `
+      <div class="card elevated" style="padding:12px;">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between;">
+          <div class="mini">📄 Preview: <b>${safeName}</b></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a class="btn ghost small" href="${objUrl}" target="_blank" rel="noopener">Open</a>
+            <a class="btn secondary small" href="${objUrl}" download="${safeName}">Download</a>
+          </div>
         </div>
-        <iframe src="${objUrl}" style="width:100%; height:72vh; border:1px solid rgba(0,0,0,.12); border-radius:12px; background:#fff;"></iframe>
-      `;
-      return;
-    }
-
-    // Fallback: download file
-    const a = document.createElement("a");
-    a.href = objUrl;
-    a.download = fname;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(()=>URL.revokeObjectURL(objUrl), 3000);
-  }).catch((e)=>{
-    console.error(e);
-    if(preview){
-      preview.innerHTML = `<div class="alert error">❌ Report open කරන්න බැහැ: ${e.message}</div>`;
-    }else{
-      toast("❌ Report open කරන්න බැහැ");
-    }
+        <div style="height:80vh; margin-top:12px;">
+          <iframe src="${objUrl}" style="width:100%;height:100%;border:1px solid rgba(255,255,255,.18);border-radius:14px;background:#fff;"></iframe>
+        </div>
+      </div>
+    `;
+  }).catch((err)=>{
+    box.innerHTML = `<div class="alert error">❌ PDF preview fail: ${escapeHtml(err?.message || err)}</div>`;
   });
 }
+
 
 function downloadRouteReport(){
   const d = qs("repDate")?.value;
   if(!d){ toast("⚠️ දිනය තෝරන්න"); return; }
   const base = (API_BASE_URL || "").replace(/\/$/, "");
   const url = `${base}/reports/daily/route-wise?date=${encodeURIComponent(d)}`;
-  openPdfInTabWithAuth(url, `route-wise-${d}.pdf`);
+  previewPdfWithAuth(url, `route-wise-${d}.pdf`);
 }
 window.open(`${API_BASE_URL || ''}/reports/daily?date=${date}&format=xlsx`, '_self');
 }
